@@ -1,17 +1,33 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
-def render(html):
-	_html = """Content-Type: text/html
+class View:
+	__layout = ""
 
-<html>
-	<head>
-		<title>Python CGI framework</title>
-	</head>
-	<body>
-		%s
-	</body>
-</html>""" % html
-	print _html
+	def __init__(self):
+		pass
 
-render('<span style="color: red; font-size: x-large;">hello</span><br /><input type="text" placeHolder="input your name"/>')
+	def __del(self):
+		pass
+
+	def layout(self, filename):
+		try:
+			with open(filename, "r") as lf:
+				self.__layout = lf.read()
+		except IOError, (msg):
+			print msg
+			quit()
+
+	def render(self, filename):
+		try:
+			with open(filename, "r") as f:
+				content = f.read()
+		except IOError, (msg):
+			print msg
+			quit()
+		html = "Content-Type: text/html\n\n" + self.__layout
+		print html
+
+v = View()
+v.layout('layout.html')
+v.render('content.html')
