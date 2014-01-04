@@ -17,10 +17,12 @@ class View:
 				self.__log_file__ = open(LOG_FILE_PATH, "a")
 			else:
 				self.__log_file__ = open(LOG_FILE_PATH, "w")
+				os.chmod(LOG_FILE_PATH, 0666)
 			logging.basicConfig(filename=LOG_FILE_PATH,
 					            level=logging.DEBUG)
 		except Exception, (msg):
-			print msg
+			self.set('__ERROR_MESSAGE__', str(msg))
+			self.render('lib/error/error.html')
 			quit()
 
 	def __del(self):
@@ -50,7 +52,10 @@ class View:
 		print self.__layout__
 
 	def set(self, var_name, value):
-		self.__set_var__[var_name] = value
+		if isinstance(value, str):
+			self.__set_var__[var_name] = value
+		else:
+			self.error_log("ERROR: set method need str value")
 
 	def log(self, msg=""):
 		logging.debug(msg)
