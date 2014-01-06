@@ -43,13 +43,20 @@ class View:
 			self.error_log(msg)
 
 		self.set("__CONTENT__", content)
-		self.__layout__ = self.__layout__.replace("%%__CONTENT__%%", content)
 		for var in re.findall("%%(.*)%%", self.__layout__):
 			try:
-				self.__layout__ = self.__layout__.replace("%%"+var+"%%", self.__set_var__[var])
+				self.__layout__ = self.__replace_set_value(self.__layout__)
 			except:
 				pass
 		print self.__layout__
+
+	def __replace_set_value(self, string):
+		for var in re.findall("%%(.*)%%", string):
+			try:
+				string = string.replace("%%"+var+"%%", self.__replace_set_value(self.__set_var__[var]))
+			except:
+				pass
+		return string
 
 	def set(self, var_name, value):
 		if isinstance(value, str):
