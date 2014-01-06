@@ -146,6 +146,7 @@ class View(IbisObject):
 ######################################################################
 # Shell Mode
 ######################################################################
+import cgitb
 import sqlite3
 from xml.etree.ElementTree import *
 
@@ -177,6 +178,7 @@ def __create_orm(schema):
 
 # do not output CGI header when this was executed by shell
 if not __name__ == "__main__":
+	cgitb.enable()
 	print "Content-Type: text/html\n\n"
 else:
 ######################################################################
