@@ -151,6 +151,7 @@ import sqlite3
 from xml.etree.ElementTree import *
 
 SCHEMA_PATH = "./schema.xml"
+MODEL_BUILD_PATH = "./model.py"
 
 def __create_orm(schema):
 	tree = parse(schema)
@@ -159,22 +160,27 @@ def __create_orm(schema):
 	c = conn.cursor()
 
 	print "DATABASE: %s" % db_name
-	for table in tree.findall(".//table"):
-		table_name = table.get("name")
-		print "    TABLE: `%s`" % table_name
-		sql = "create table if not exists %s (" % table_name
-		if len(table.findall(".//column")) == 0: # TODO
-			print "ERROR: no column in table `%s`" % table_name
-			quit()
-		for column in table.findall(".//column"):
-			name = column.get("name")
-			type = column.get("type")
-			print "        + {0}({1})".format(name, type)
-			sql += "{0} {1}, ".format(name, type)
-		sql = re.sub(", $", ");", sql)
-		c.execute(sql)
-	conn.commit()
-	conn.close()
+	with open(MODEL_BUILD_PATH, "w") as model:
+		model.write("###############################\n# Ibis Model\n###############################\n")
+		for table in tree.findall(".//table"):
+			table_name = table.get("name")
+			print "    TABLE: `%s`" % table_name
+			sql = "create table if not exists %s (" % table_name
+			if len(table.findall(".//column")) == 0: # TODO
+				print "ERROR: no column in table `%s`" % table_name
+				quit()
+			model.write("\nclass {0}:\n\tdef __init__(self):\n".format(table_name))
+			for column in table.findall(".//column"):
+				name = column.get("name")
+				type = column.get("type")
+				print "        + {0}({1})".format(name, type)
+				model.write("\t\tself.__{0} = 0\n".format(name))
+				sql += "{0} {1}, ".format(name, type)
+			sql = re.sub(", $", ");", sql)
+			c.execute(sql)
+			model.write("\tdef __del__(self):\n\t\tdel self\n")
+		conn.commit()
+		conn.close()
 
 # do not output CGI header when this was executed by shell
 if not __name__ == "__main__":
@@ -183,6 +189,7 @@ if not __name__ == "__main__":
 else:
 ######################################################################
 # main stream
+######################################################################
 	argc = len(sys.argv)
 	if argc < 2:
 		print "show help"	# TODO

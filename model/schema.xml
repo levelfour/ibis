@@ -82,25 +82,20 @@
 		<column name="url" type="text" />
 		<column name="comment" type="text" />
 		<column name="event_id" type="integer" null="true" />
-		<!--
 		<foreign-key foreignTable="events">
 			<reference local="event_id" foreign="id" />
 		</foreign-key>
-		-->
-	</table>>
+	</table>
 	<table name="scores">
 		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
 		<column name="title" type="varchar" size="32" />
 		<column name="url" type="text" />
 		<column name="comment" type="text" />
 		<column name="music_id" type="integer" />
-		<!--
 		<foreign-key foreignTable="musics">
 			<reference local="music_id" foreign="id" />
 		</foreign-key>
-		-->
 	</table>
-
 	<table name="music_players">
 		<column name="member_id" type="integer" />
 		<column name="music_id" type="integer" />
