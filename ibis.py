@@ -161,20 +161,19 @@ def __create_orm(schema):
 	for table in tree.findall(".//table"):
 		table_name = table.get("name")
 		print "    TABLE: `%s`" % table_name
-		if c.execute("select count(*) from sqlite_master where type='table' and name='%s'" % table_name).fetchone() != None: # TODO
-			print "ERROR: table `%s` already exists" % table_name
-			quit()
-		sql = "create table %s (" % table_name
+		sql = "create table if not exists %s (" % table_name
 		if len(table.findall(".//column")) == 0: # TODO
 			print "ERROR: no column in table `%s`" % table_name
+			quit()
 		for column in table.findall(".//column"):
 			name = column.get("name")
 			type = column.get("type")
 			print "        + {0}({1})".format(name, type)
 			sql += "{0} {1}, ".format(name, type)
-		sql = re.sub(", $", ")", sql)
+		sql = re.sub(", $", ");", sql)
 		c.execute(sql)
-	c.close()
+	conn.commit()
+	conn.close()
 
 # do not output CGI header when this was executed by shell
 if not __name__ == "__main__":
