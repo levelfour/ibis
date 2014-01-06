@@ -7,32 +7,55 @@ import logging
 LOG_FILE_PATH = "tmp/log/debug.log"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-print "Content-Type: text/html\n\n"
+# do not output CGI header when this was executed by shell
+if not __name__ == "__main__":
+	print "Content-Type: text/html\n\n"
 
-class View:
+######################################################################
+# + class: IbisObject
+# + desc: root object in Ibis library
+######################################################################
+class IbisObject:
 	def __init__(self):
-		self.__set_var = {}
-		self.__set_arr = {}
-		self.__logger = logging.getLogger(self.__class__.__name__)
-		self.__log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
-		self.layout('lib/default/layout.html')
+		self.logger = logging.getLogger(self.__class__.__name__)
+		self.log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
+		self.__open_log_file()
+
+	def __del__(self):
+		self.log_file.close()
+		del self
+
+	def __open_log_file(self):
 		try:
 			if os.path.exists(LOG_FILE_PATH):
-				self.__log_file = open(LOG_FILE_PATH, "a")
+				self.log_file = open(LOG_FILE_PATH, "a")
 			else:
-				self.__log_file = open(LOG_FILE_PATH, "w")
+				self.log_file = open(LOG_FILE_PATH, "w")
 				os.chmod(LOG_FILE_PATH, 0666)
 			logging.basicConfig(filename=LOG_FILE_PATH,
 					            level=logging.DEBUG,
-								format=self.__log_format,
+								format=self.log_format,
 								datefmt=DATE_FORMAT,)
 		except Exception, (msg):
-			self.set('__ERROR_MESSAGE__', str(msg))
-			self.render('lib/error/error.html')
+			print msg
 			quit()
 
-	def __del(self):
-		self.__logfile.close()
+	def log(self, msg=""):
+		self.logger.debug(msg)
+
+	def error_log(self, msg=""):
+		self.logger.error(msg)
+
+######################################################################
+# + class: View
+# + desc: render HTML
+######################################################################
+class View(IbisObject):
+	def __init__(self):
+		IbisObject.__init__(self)
+		self.__set_var = {}
+		self.__set_arr = {}
+		self.layout('lib/default/layout.html')
 
 	def layout(self, filename):
 		try:
@@ -105,11 +128,8 @@ class View:
 		except Exception, (msg):
 			self.error_log(msg)
 
-	def log(self, msg=""):
-		self.__logger.debug(msg)
-
 	def error_log(self, msg=""):
-		self.__logger.error(msg)
+		self.logger.error(msg)
 		info = sys.exc_info()
 		tb_info = traceback.extract_tb(info[2])[0]
 		# push stack info
