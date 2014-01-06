@@ -7,10 +7,6 @@ import logging
 LOG_FILE_PATH = "tmp/log/debug.log"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-# do not output CGI header when this was executed by shell
-if not __name__ == "__main__":
-	print "Content-Type: text/html\n\n"
-
 ######################################################################
 # + class: IbisObject
 # + desc: root object in Ibis library
@@ -146,3 +142,47 @@ class View(IbisObject):
 		self.set('__ERROR_MESSAGE__', str(msg))
 		self.render('lib/error/error.html')
 		quit()
+
+######################################################################
+# Shell Mode
+######################################################################
+import sqlite3
+from xml.etree.ElementTree import *
+
+SCHEMA_PATH = "./schema.xml"
+
+def __create_orm(xmlfile):
+	tree = parse(xmlfile)
+	print "DATABASE: %s" % tree.getroot().get("name")
+	for table in tree.findall(".//table"):
+		print "    TABLE: `%s`" % table.get("name")
+		for column in table.findall(".//column"):
+			print "        + {0}({1})".format(column.get("name"), column.get("type"))
+
+# do not output CGI header when this was executed by shell
+if not __name__ == "__main__":
+	print "Content-Type: text/html\n\n"
+else:
+######################################################################
+# main stream
+	argc = len(sys.argv)
+	if argc < 2:
+		print "show help"	# TODO
+	else:
+		command = sys.argv[1]
+		if command == "orm":
+			if argc >= 3:
+				filename = sys.argv[2]
+				try:
+					with open(filename, "r") as xmlfile:
+						__create_orm(xmlfile)
+				except IOError, (msg):
+					print msg
+			else:
+				try:
+					with open(SCHEMA_PATH, "r") as xmlfile:
+						__create_orm(xmlfile)
+				except IOError:
+					print "prepare XML schema file named `%s`" % SCHEMA_PATH
+		else:
+			print "show help" # TODO

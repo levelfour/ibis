@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="jjw">
+	<table name="members">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="name" type="varchar" size="16" />
+		<column name="birthday" type="date" />
+		<column name="email" type="varchar" size="128" />
+		<column name="password" type="varchar" size="32" />
+		<column name="twitter_id" type="varchar" size="16" />
+		<column name="comment" type="text" />
+		<column name="reg" type="boolean" />
+		<column name="part_id" type="integer" />
+		<column name="job_id" type="integer" />
+		<column name="icon_url" type="text" />
+		<column name="joined_date" type="date" />
+		<foreign-key foreignTable="parts">
+			<reference local="part_id" foreign="id" />
+		</foreign-key>
+		<foreign-key foreignTable="jobs">
+			<reference local="job_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="messages">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="member_id" type="integer" />
+		<column name="part_id" type="integer" />
+		<column name="body" type="text" />
+		<foreign-key foreignTable="members">
+			<reference local="member_id" foreign="id" />
+		</foreign-key>
+		<foreign-key foreignTable="parts">
+			<reference local="part_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="reminders">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="message_id" type="integer" />
+		<column name="send_time" type="datetime" />
+		<foreign-key foreignTable="messages">
+			<reference local="message_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="schedules">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="status" type="tinyint" />
+		<column name="band_id" type="integer" />
+		<column name="description" type="text" />
+		<column name="start_time" type="datetime" />
+		<column name="end_time" type="datetime" />
+		<foreign-key foreignTable="bands">
+			<reference local="band_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="reservations">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="member_id" type="integer" />
+		<column name="room_id" type="integer" />
+		<column name="start_time" type="datetime" />
+		<column name="end_time" type="datetime" />
+		<column name="schedule_id" type="integer" />
+		<foreign-key foreignTable="members">
+			<reference local="member_id" foreign="id" />
+		</foreign-key>
+		<foreign-key foreignTable="rooms">
+			<reference local="room_id" foreign="id" />
+		</foreign-key>
+		<foreign-key foreignTable="schedules">
+			<reference local="schedule_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="comments">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="member_id" type="integer" />
+		<column name="body" type="text" />
+		<foreign-key foreignTable="members">
+			<reference local="member_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="musics">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="title" type="varchar" size="32" />
+		<column name="url" type="text" />
+		<column name="comment" type="text" />
+		<column name="event_id" type="integer" null="true" />
+		<!--
+		<foreign-key foreignTable="events">
+			<reference local="event_id" foreign="id" />
+		</foreign-key>
+		-->
+	</table>>
+	<table name="musics">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="title" type="varchar" size="32" />
+		<column name="url" type="text" />
+		<column name="comment" type="text" />
+		<column name="music_id" type="integer" />
+		<!--
+		<foreign-key foreignTable="musics">
+			<reference local="music_id" foreign="id" />
+		</foreign-key>
+		-->
+	</table>
+
+	<table name="music_players">
+		<column name="member_id" type="integer" />
+		<column name="music_id" type="integer" />
+		<foreign-key foreignTable="members">
+			<reference local="member_id" foreign="id" />
+		</foreign-key>
+		<foreign-key foreignTable="musics">
+			<reference local="music_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="events">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="title" type="varchar" size="32" />
+		<column name="date" type="datetime" />
+		<column name="description" type="text" />
+	</table>
+	<table name="bands">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="name" type="varchar" size="32" />
+		<column name="description" type="text" />
+	</table>
+	<table name="band_members">
+		<column name="member_id" type="integer" />
+		<column name="band_id" type="integer" />
+		<foreign-key foreignTable="members">
+			<reference local="member_id" foreign="id" />
+		</foreign-key>
+		<foreign-key foreignTable="bands">
+			<reference local="band_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="parts">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="title" type="varchar" size="32" />
+	</table>
+	<table name="rooms">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="title" type="varchar" size="32" />
+	</table>
+	<table name="jobs">
+		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="title" type="varchar" size="32" />
+	</table>
+</database>
