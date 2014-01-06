@@ -18,7 +18,7 @@
 
 .error_table th, .error_table td {
 	text-align: left;
-	font-size: x-large;
+	font-size: large;
 	border: solid 3px black;
 	border-bottom: none;
 	box-sizing: border-box;
@@ -33,19 +33,24 @@
 		<th colspan=4>Python Error</th>
 	</tr>
 	<tr>
+		<th colspan=4>STACK INFO</th>
+	</tr>
+	<tr>
 		<th>FILE</th>
 		<th>LINE</th>
 		<th>FUNCTION</th>
 		<th>CODE</th>
 	</tr>
 	@@
-	test multiline
-	@@
 	<tr>
 		<td>$$__ERROR_FILE__$$</td>
 		<td>$$__ERROR_LINE__$$</td>
 		<td>$$__ERROR_FUNC__$$</td>
 		<td>$$__ERROR_TEXT__$$</td>
+	</tr>
+	@@
+	<tr>
+		<th colspan=4>ERROR INFO</th>
 	</tr>
 	<tr>
 		<td colspan=4>$$__ERROR_MESSAGE__$$</td>

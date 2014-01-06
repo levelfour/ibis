@@ -5,7 +5,7 @@ import re
 import logging
 
 LOG_FILE_PATH = "tmp/log/debug.log"
-DATE_FORMAT = '%Y/%m/%d %p %I:%M:%S'
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 print "Content-Type: text/html\n\n"
 
@@ -58,16 +58,35 @@ class View:
 		else:
 			self.error_log("ERROR: set method need str value")
 
-	def set_array(self, array_name, array):
-		for v in array:
-			if not isinstance(v, str):
-				self.error_log("ERROR: set_array method need str array")
-		self.__set_arr[array_name] = array
+	def push(self, array_name, value):
+		if isinstance(value, str):
+			if not array_name in self.__set_arr:
+				self.__set_arr[array_name] = []
+			self.__set_arr[array_name].append(value)
+		else:
+			self.error_log("ERROR: push method need str array")
 
 	def __expand(self, string):
 		for arr in re.findall("@@(.*)@@", string, re.DOTALL):
 			try:
-				string = string.replace("@@"+arr+"@@", "array")
+				array_names = []
+				array_len = 0
+				expanded_str = ""
+				for array_name in re.findall("\$\$(.*)\$\$", arr):
+					array_names.append(array_name)
+					if array_name in self.__set_arr \
+							and len(self.__set_arr[array_name]) > array_len:
+						array_len = len(self.__set_arr[array_name])
+				for i in range(array_len):
+					element = arr
+					for array_name in array_names:
+						if len(self.__set_arr[array_name]) > i:
+							value = self.__set_arr[array_name][i]
+							element = element.replace("$$"+array_name+"$$", value)
+						else:
+							element = element.replace("$$"+array_name+"$$", "")
+					expanded_str += element
+				string = string.replace("@@"+arr+"@@", expanded_str)
 			except:
 				pass
 		for var in re.findall("\$\$(.*)\$\$", string):
@@ -81,14 +100,20 @@ class View:
 		self.__logger.debug(msg)
 
 	def error_log(self, msg=""):
+		self.__logger.error(msg)
 		info = sys.exc_info()
 		tb_info = traceback.extract_tb(info[2])[0]
-		self.log(traceback.extract_stack())
-		self.__logger.error(msg)
-		self.set('__ERROR_FILE__', str(tb_info[0]))
-		self.set('__ERROR_LINE__', str(tb_info[1]))
-		self.set('__ERROR_FUNC__', str(tb_info[2]))
-		self.set('__ERROR_TEXT__', str(tb_info[3]))
+		# push stack info
+		for st_info in traceback.extract_stack():
+			self.push('__ERROR_FILE__', str(st_info[0]))
+			self.push('__ERROR_LINE__', str(st_info[1]))
+			self.push('__ERROR_FUNC__', str(st_info[2]))
+			self.push('__ERROR_TEXT__', str(st_info[3]))
+		# push current stack info
+		self.push('__ERROR_FILE__', str(tb_info[0]))
+		self.push('__ERROR_LINE__', str(tb_info[1]))
+		self.push('__ERROR_FUNC__', str(tb_info[2]))
+		self.push('__ERROR_TEXT__', str(tb_info[3]))
 		self.set('__ERROR_MESSAGE__', str(msg))
 		self.render('lib/error/error.html')
 		quit()
