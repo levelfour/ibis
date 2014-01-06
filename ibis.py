@@ -65,7 +65,7 @@ class View:
 		self.__set_arr[array_name] = array
 
 	def __expand(self, string):
-		for arr in re.findall("@@(.*)@@", string):
+		for arr in re.findall("@@(.*)@@", string, re.DOTALL):
 			try:
 				string = string.replace("@@"+arr+"@@", "array")
 			except:
@@ -92,4 +92,3 @@ class View:
 		self.set('__ERROR_MESSAGE__', str(msg))
 		self.render('lib/error/error.html')
 		quit()
-
