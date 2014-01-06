@@ -4,5 +4,5 @@ import ibis
 
 if __name__ == "__main__":
 	v = ibis.View()
-	v.layout('layout.html')
-	v.render('content.html')
+	v.layout('view/layout.html')
+	v.render('view/content.html')
