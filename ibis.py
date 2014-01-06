@@ -153,34 +153,60 @@ from xml.etree.ElementTree import *
 SCHEMA_PATH = "./schema.xml"
 MODEL_BUILD_PATH = "./model.py"
 
+__MODEL_FILE_INIT = """\
+###############################
+# Ibis Model
+###############################
+import sqlite3\n
+class Model:
+	def __init__(self):
+		conn = sqlite4.connect("{0}.sqlite3")
+		c = conn.cursor()
+	def __del__(self):
+		conn.close()
+		del self
+"""
+__MODEL_INIT = """
+class {0}(Model):
+	pass
+"""
+
+# create model.py module (used by client script)
+def __create_model(db_name, struct):
+	with open(MODEL_BUILD_PATH, "w") as model:
+		model.write(__MODEL_FILE_INIT.format(db_name))
+		for table in struct:
+			model.write(__MODEL_INIT.format(table))
+
+# construct sqlite3 database
 def __create_orm(schema):
 	tree = parse(schema)
+	db_struct = {}
 	db_name = tree.getroot().get("name")
 	conn = sqlite3.connect("%s.sqlite3" % db_name)
 	c = conn.cursor()
 
 	print "DATABASE: %s" % db_name
-	with open(MODEL_BUILD_PATH, "w") as model:
-		model.write("###############################\n# Ibis Model\n###############################\n")
-		for table in tree.findall(".//table"):
-			table_name = table.get("name")
-			print "    TABLE: `%s`" % table_name
-			sql = "create table if not exists %s (" % table_name
-			if len(table.findall(".//column")) == 0: # TODO
-				print "ERROR: no column in table `%s`" % table_name
-				quit()
-			model.write("\nclass {0}:\n\tdef __init__(self):\n".format(table_name))
-			for column in table.findall(".//column"):
-				name = column.get("name")
-				type = column.get("type")
-				print "        + {0}({1})".format(name, type)
-				model.write("\t\tself.__{0} = 0\n".format(name))
-				sql += "{0} {1}, ".format(name, type)
-			sql = re.sub(", $", ");", sql)
-			c.execute(sql)
-			model.write("\tdef __del__(self):\n\t\tdel self\n")
-		conn.commit()
-		conn.close()
+	for table in tree.findall(".//table"):
+		table_name = table.get("name")
+		print "    TABLE: `%s`" % table_name
+		sql = "create table if not exists %s (" % table_name
+		# no table column -> exception
+		if len(table.findall(".//column")) == 0: # TODO
+			print "ERROR: no column in table `%s`" % table_name
+			quit()
+		db_struct[table_name] = []
+		for column in table.findall(".//column"):
+			name = column.get("name")
+			type = column.get("type")
+			db_struct[table_name].append([name, type])
+			sql += "{0} {1}, ".format(name, type)
+		sql = re.sub(", $", ");", sql)
+		c.execute(sql) # create table
+	conn.commit()
+	conn.close()
+
+	__create_model(db_name, db_struct)
 
 # do not output CGI header when this was executed by shell
 if not __name__ == "__main__":
