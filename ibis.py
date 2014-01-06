@@ -72,7 +72,7 @@ class View:
 				array_names = []
 				array_len = 0
 				expanded_str = ""
-				for array_name in re.findall("\$\$(.*)\$\$", arr):
+				for array_name in re.findall("\$@(.*)\$@", arr):
 					array_names.append(array_name)
 					if array_name in self.__set_arr \
 							and len(self.__set_arr[array_name]) > array_len:
@@ -82,9 +82,9 @@ class View:
 					for array_name in array_names:
 						if len(self.__set_arr[array_name]) > i:
 							value = self.__set_arr[array_name][i]
-							element = element.replace("$$"+array_name+"$$", value)
+							element = element.replace("$@"+array_name+"$@", value)
 						else:
-							element = element.replace("$$"+array_name+"$$", "")
+							element = element.replace("$@"+array_name+"$@", "")
 					expanded_str += element
 				string = string.replace("@@"+arr+"@@", expanded_str)
 			except:
