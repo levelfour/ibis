@@ -160,15 +160,17 @@ __MODEL_FILE_INIT = """\
 import sqlite3\n
 class Model:
 	def __init__(self):
-		conn = sqlite4.connect("{0}.sqlite3")
-		c = conn.cursor()
+		self.conn = sqlite3.connect("{0}.sqlite3")
+		self.c = self.conn.cursor()
 	def __del__(self):
-		conn.close()
+		self.conn.close()
 		del self
 """
 __MODEL_INIT = """
 class {0}(Model):
-	pass
+	def insert(self, {1}):
+		self.c.execute('{2}', ({1}))
+		self.conn.commit()
 """
 
 # create model.py module (used by client script)
@@ -176,7 +178,15 @@ def __create_model(db_name, struct):
 	with open(MODEL_BUILD_PATH, "w") as model:
 		model.write(__MODEL_FILE_INIT.format(db_name))
 		for table in struct:
-			model.write(__MODEL_INIT.format(table))
+			column_num = len(struct[table])
+			sql = "insert into {0} values(".format(table)
+			column_list = ""
+			for i in range(column_num):
+				sql += "?,"
+				column_list += "_" + struct[table][i][0] + ","
+			sql = re.sub(",$", ")", sql)
+			column_list = re.sub(",$", "", column_list)
+			model.write(__MODEL_INIT.format(table, column_list, sql))
 
 # construct sqlite3 database
 def __create_orm(schema):
