@@ -66,35 +66,44 @@ class View:
 		else:
 			self.error_log("ERROR: push method need str array")
 
+	# expand set variable ($$***$$) and set array (@@ $@***$@ @@)
 	def __expand(self, string):
+		# expand set array
 		for arr in re.findall("@@(.*)@@", string, re.DOTALL):
-			try:
-				array_names = []
-				array_len = 0
-				expanded_str = ""
-				for array_name in re.findall("\$@(.*)\$@", arr):
-					array_names.append(array_name)
-					if array_name in self.__set_arr \
-							and len(self.__set_arr[array_name]) > array_len:
-						array_len = len(self.__set_arr[array_name])
-				for i in range(array_len):
-					element = arr
-					for array_name in array_names:
-						if len(self.__set_arr[array_name]) > i:
-							value = self.__set_arr[array_name][i]
-							element = element.replace("$@"+array_name+"$@", value)
-						else:
-							element = element.replace("$@"+array_name+"$@", "")
-					expanded_str += element
-				string = string.replace("@@"+arr+"@@", expanded_str)
-			except:
-				pass
+			string = string.replace("@@"+arr+"@@", self.__expand_array(arr))
+		# expand set variable
 		for var in re.findall("\$\$(.*)\$\$", string):
-			try:
+			if var in self.__set_var:
 				string = string.replace("$$"+var+"$$", self.__expand(self.__set_var[var]))
-			except:
-				pass
+			else:
+				string = string.replace("$$"+var+"$$", "")
 		return string
+
+	# expand set array (@@ ... @@) in `string`
+	def __expand_array(self, string):
+		try:
+			array_names = []	# array names included in `string`
+			array_len = 0		# max length of arrays
+			for array_name in re.findall("\$@(.*)\$@", string):
+				array_names.append(array_name)
+				# find longest array length
+				if array_name in self.__set_arr \
+						and len(self.__set_arr[array_name]) > array_len:
+					array_len = len(self.__set_arr[array_name])
+			# output element by `array_len` times
+			expanded_str = ""
+			for i in range(array_len):
+				element = string
+				for array_name in array_names:
+					if len(self.__set_arr[array_name]) > i:
+						value = self.__set_arr[array_name][i]
+						element = element.replace("$@"+array_name+"$@", value)
+					else:
+						element = element.replace("$@"+array_name+"$@", "")
+				expanded_str += element
+			return expanded_str
+		except Exception, (msg):
+			self.error_log(msg)
 
 	def log(self, msg=""):
 		self.__logger.debug(msg)
