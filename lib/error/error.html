@@ -1,15 +1,50 @@
 <style>
-div.error_box {
-	border: solid 3px black;
-	padding: 20px;
+.error_table {
+	border-collapse: collapse;
+}
+
+.error_table th {
+	color: white;
+	background-color: red;
+}
+
+.error_table td {
 	background-color: orange;
+}
+
+.error_table tr {
+	border: none;
+}
+
+.error_table th, .error_table td {
+	text-align: left;
+	font-size: x-large;
+	border: solid 3px black;
+	border-bottom: none;
 	box-sizing: border-box;
 }
 
-.error_text {
-	font-size: xx-large;
+.error_table tr:last-child td {
+	border-bottom: solid 3px black;
 }
 </style>
-<div class="error_box">
-	<div class="error_text">%%__ERROR_MESSAGE__%%</div>
-</div>
+<table class="error_table">
+	<tr>
+		<th colspan=4>Python Error</th>
+	</tr>
+	<tr>
+		<th>FILE</th>
+		<th>LINE</th>
+		<th>FUNCTION</th>
+		<th>CODE</th>
+	</tr>
+	<tr>
+		<td>%%__ERROR_FILE__%%</td>
+		<td>%%__ERROR_LINE__%%</td>
+		<td>%%__ERROR_FUNC__%%</td>
+		<td>%%__ERROR_TEXT__%%</td>
+	</tr>
+	<tr>
+		<td colspan=4>%%__ERROR_MESSAGE__%%</td>
+	</tr>
+</table>
