@@ -12,6 +12,7 @@ print "Content-Type: text/html\n\n"
 class View:
 	def __init__(self):
 		self.__set_var = {}
+		self.__set_arr = {}
 		self.__logger = logging.getLogger(self.__class__.__name__)
 		self.__log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
 		self.layout('lib/default/layout.html')
@@ -48,20 +49,8 @@ class View:
 			self.error_log(msg)
 
 		self.set("__CONTENT__", content)
-		for var in re.findall("%%(.*)%%", self.__layout):
-			try:
-				self.__layout = self.__replace_set_value(self.__layout)
-			except:
-				pass
+		self.__layout = self.__expand(self.__layout)
 		print self.__layout
-
-	def __replace_set_value(self, string):
-		for var in re.findall("%%(.*)%%", string):
-			try:
-				string = string.replace("%%"+var+"%%", self.__replace_set_value(self.__set_var[var]))
-			except:
-				pass
-		return string
 
 	def set(self, var_name, value):
 		if isinstance(value, str):
@@ -69,12 +58,32 @@ class View:
 		else:
 			self.error_log("ERROR: set method need str value")
 
+	def set_array(self, array_name, array):
+		for v in array:
+			if not isinstance(v, str):
+				self.error_log("ERROR: set_array method need str array")
+		self.__set_arr[array_name] = array
+
+	def __expand(self, string):
+		for arr in re.findall("@@(.*)@@", string):
+			try:
+				string = string.replace("@@"+arr+"@@", "array")
+			except:
+				pass
+		for var in re.findall("\$\$(.*)\$\$", string):
+			try:
+				string = string.replace("$$"+var+"$$", self.__expand(self.__set_var[var]))
+			except:
+				pass
+		return string
+
 	def log(self, msg=""):
 		self.__logger.debug(msg)
 
 	def error_log(self, msg=""):
 		info = sys.exc_info()
 		tb_info = traceback.extract_tb(info[2])[0]
+		self.log(traceback.extract_stack())
 		self.__logger.error(msg)
 		self.set('__ERROR_FILE__', str(tb_info[0]))
 		self.set('__ERROR_LINE__', str(tb_info[1]))
