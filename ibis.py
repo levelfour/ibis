@@ -151,13 +151,30 @@ from xml.etree.ElementTree import *
 
 SCHEMA_PATH = "./schema.xml"
 
-def __create_orm(xmlfile):
-	tree = parse(xmlfile)
-	print "DATABASE: %s" % tree.getroot().get("name")
+def __create_orm(schema):
+	tree = parse(schema)
+	db_name = tree.getroot().get("name")
+	conn = sqlite3.connect("%s.sqlite3" % db_name)
+	c = conn.cursor()
+
+	print "DATABASE: %s" % db_name
 	for table in tree.findall(".//table"):
-		print "    TABLE: `%s`" % table.get("name")
+		table_name = table.get("name")
+		print "    TABLE: `%s`" % table_name
+		if c.execute("select count(*) from sqlite_master where type='table' and name='%s'" % table_name).fetchone() != None: # TODO
+			print "ERROR: table `%s` already exists" % table_name
+			quit()
+		sql = "create table %s (" % table_name
+		if len(table.findall(".//column")) == 0: # TODO
+			print "ERROR: no column in table `%s`" % table_name
 		for column in table.findall(".//column"):
-			print "        + {0}({1})".format(column.get("name"), column.get("type"))
+			name = column.get("name")
+			type = column.get("type")
+			print "        + {0}({1})".format(name, type)
+			sql += "{0} {1}, ".format(name, type)
+		sql = re.sub(", $", ")", sql)
+		c.execute(sql)
+	c.close()
 
 # do not output CGI header when this was executed by shell
 if not __name__ == "__main__":
