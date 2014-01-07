@@ -176,7 +176,7 @@ class {0}(Model):
 		list = []
 		self.c.execute("select * from {0}")
 		for {1} in self.c.fetchall():
-			list += [{1}]
+			list += [[{1}]]
 		return list
 """
 
