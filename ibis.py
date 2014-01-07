@@ -166,11 +166,18 @@ class Model:
 		self.conn.close()
 		del self
 """
-__MODEL_INIT = """
+__MODEL_METHOD = """
 class {0}(Model):
 	def insert(self, {1}):
 		self.c.execute('{2}', ({1}))
 		self.conn.commit()
+
+	def findAll(self):
+		list = []
+		self.c.execute("select * from {0}")
+		for {1} in self.c.fetchall():
+			list += [{1}]
+		return list
 """
 
 # create model.py module (used by client script)
@@ -183,10 +190,10 @@ def __create_model(db_name, struct):
 			column_list = ""
 			for i in range(column_num):
 				sql += "?,"
-				column_list += "_" + struct[table][i][0] + ","
+				column_list += struct[table][i][0] + "," # column name
 			sql = re.sub(",$", ")", sql)
 			column_list = re.sub(",$", "", column_list)
-			model.write(__MODEL_INIT.format(table, column_list, sql))
+			model.write(__MODEL_METHOD.format(table, column_list, sql))
 
 # construct sqlite3 database
 def __create_orm(schema):
