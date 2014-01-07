@@ -7,6 +7,15 @@ import logging
 LOG_FILE_PATH = "tmp/log/debug.log"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+def __debug(msg):
+	global logger
+	logger.debug(msg)
+
+def __error(msg):
+	global logger
+	logger.error(msg)
+	quit()
+
 ######################################################################
 # + class: IbisObject
 # + desc: root object in Ibis library
@@ -33,8 +42,7 @@ class IbisObject:
 								format=self.log_format,
 								datefmt=DATE_FORMAT,)
 		except Exception, (msg):
-			print msg
-			quit()
+			__error(msg)
 
 	def log(self, msg=""):
 		self.logger.debug(msg)
@@ -172,7 +180,7 @@ class {0}(Model):
 		self.c.execute('{2}', ({1}))
 		self.conn.commit()
 
-	def findAll(self):
+	def find(self):
 		list = []
 		self.c.execute("select * from {0}")
 		for {1} in self.c.fetchall():
@@ -209,9 +217,8 @@ def __create_orm(schema):
 		print "    TABLE: `%s`" % table_name
 		sql = "create table if not exists %s (" % table_name
 		# no table column -> exception
-		if len(table.findall(".//column")) == 0: # TODO
-			print "ERROR: no column in table `%s`" % table_name
-			quit()
+		if len(table.findall(".//column")) == 0:
+			__error("no column in table `%s`" % table_name)
 		db_struct[table_name] = []
 		for column in table.findall(".//column"):
 			name = column.get("name")
@@ -233,6 +240,9 @@ else:
 ######################################################################
 # main stream
 ######################################################################
+	global logger # logger for Ibis script
+	logger = logging.getLogger("IbisLog")
+	logging.basicConfig(level=logging.DEBUG)
 	argc = len(sys.argv)
 	if argc < 2:
 		print "show help"	# TODO
@@ -245,12 +255,12 @@ else:
 					with open(filename, "r") as xmlfile:
 						__create_orm(xmlfile)
 				except IOError, (msg):
-					print msg
+					__error(msg)
 			else:
 				try:
 					with open(SCHEMA_PATH, "r") as xmlfile:
 						__create_orm(xmlfile)
 				except IOError:
-					print "prepare XML schema file named `%s`" % SCHEMA_PATH
+					__error("prepare XML schema file named `%s`" % SCHEMA_PATH)
 		else:
 			print "show help" # TODO
