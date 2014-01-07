@@ -180,9 +180,16 @@ class {0}(Model):
 		self.c.execute('{2}', ({1}))
 		self.conn.commit()
 
-	def find(self):
+	def find(self, condition={}):
+		if not isinstance(condition, type(dict())):
+			print "ERROR(TODO): 2nd arg of find is not dict"
 		list = []
-		self.c.execute("select * from {0}")
+		sql = ""
+		if len(condition) == 0 or condition["condition"] == "all":
+			sql = "select * from {0}"
+		else:
+			print "ERROR(TODO): 2nd arg of find has invalid format"
+		self.c.execute(sql)
 		for {1} in self.c.fetchall():
 			list += [[{1}]]
 		return list
