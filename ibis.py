@@ -174,25 +174,32 @@ class Model:
 		self.conn.close()
 		del self
 """
-__MODEL_METHOD = """
-class {0}(Model):
-	def insert(self, {1}):
-		self.c.execute('{2}', ({1}))
+__MODEL_QUERY = """
+class {table}_query(Model):
+	def insert(self, {arglist}):
+		self.c.execute('{sql}', ({columnlist}))
 		self.conn.commit()
 
-	def find(self, condition={}):
+	def find(self, condition={{}}):
 		if not isinstance(condition, type(dict())):
 			print "ERROR(TODO): 2nd arg of find is not dict"
+			quit()
 		list = []
 		sql = ""
 		if len(condition) == 0 or condition["condition"] == "all":
-			sql = "select * from {0}"
+			sql = "select * from {table}"
 		else:
 			print "ERROR(TODO): 2nd arg of find has invalid format"
 		self.c.execute(sql)
-		for {1} in self.c.fetchall():
-			list += [[{1}]]
+		for row in self.c:
+			list += [row]
 		return list
+"""
+
+__MODEL_INSTANCE = """
+class {0}(Model):
+	def __init__(self):
+		Model.__init(self)__
 """
 
 # create model.py module (used by client script)
@@ -204,11 +211,18 @@ def __create_model(db_name, struct):
 			sql = "insert into {0} values(".format(table)
 			column_list = ""
 			for i in range(column_num):
-				sql += "?,"
-				column_list += struct[table][i][0] + "," # column name
+				if struct[table][i][0] != "id":
+					sql += "?,"
+					column_list += struct[table][i][0] + ", " # column name
+				else:
+					sql += "null, "
 			sql = re.sub(",$", ")", sql)
-			column_list = re.sub(",$", "", column_list)
-			model.write(__MODEL_METHOD.format(table, column_list, sql))
+			column_list = re.sub(" $", "", column_list)
+			model.write(__MODEL_QUERY.format(
+				table=table,
+				arglist=re.sub(",$", "", column_list),
+				columnlist=column_list,
+				sql=sql))
 
 # construct sqlite3 database
 def __create_orm(schema):
@@ -231,7 +245,10 @@ def __create_orm(schema):
 			name = column.get("name")
 			type = column.get("type")
 			db_struct[table_name].append([name, type])
-			sql += "{0} {1}, ".format(name, type)
+			if name == "id" and type == "integer":
+				sql += "{0} {1} primary key autoincrement, ".format(name, type)
+			else:
+				sql += "{0} {1}, ".format(name, type)
 		sql = re.sub(", $", ");", sql)
 		c.execute(sql) # create table
 	conn.commit()
