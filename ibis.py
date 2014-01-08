@@ -187,23 +187,26 @@ class ModelQuery:
 			quit()
 		else:
 			r_like = re.compile("\s*like\s+(\S+)\s*", re.IGNORECASE)
-			r_comp = re.compile("\s*(=|!=|>=|>|<=|<)\s+(\S+)\s*")
+			r_comp = re.compile("\s*(==|!=|=|>=|>|<=|<)\s*(\S+)\s*")
 			r_val = re.compile("\s*(\S+)\s*")
+			sql = "where "
 			for col_name in list["condition"]:
 				if r_like.findall(list["condition"][col_name]) != []:
-					pattern = r_like.findall(list["condition"][col_name])[0]
-					return "where {{}} like '{{}}'".format(col_name, pattern)
+					for pattern in r_like.findall(list["condition"][col_name]):
+						sql += "{{}} like '{{}}' and ".format(col_name, pattern)
 				elif r_comp.findall(list["condition"][col_name]) != []:
-					operator = r_comp.findall(list["condition"][col_name])[0][0]
-					value = r_comp.findall(list["condition"][col_name])[0][1]
-					print "where {{}} {{}} '{{}}'".format(col_name, operator, value)
-					return "where {{}} {{}} '{{}}'".format(col_name, operator, value)
+					for cond in r_comp.findall(list["condition"][col_name]):
+						operator = cond[0]
+						value = cond[1]
+						sql += "{{}} {{}} '{{}}' and ".format(col_name, operator, value)
 				elif r_val.findall(list["condition"][col_name]) != []:
 					value = r_val.findall(list["condition"][col_name])[0]
-					return "where {{}} = '{{}}'".format(col_name, value)
+					sql += "{{}} = '{{}}' and ".format(col_name, value)
 				else:
 					print "ERROR(TODO): wrong pattern for sql"
 					quit()
+			sql = re.sub(" and $", "", sql)
+			return sql
 
 class Model:
 	def __init__(self):
