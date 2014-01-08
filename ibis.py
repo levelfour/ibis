@@ -213,9 +213,9 @@ class {table}_query(Model):
 """
 
 __MODEL_INSTANCE = """
-class {0}(Model):
-	def __init__(self):
-		Model.__init(self)__
+class {table}(Model):
+	def __init__(self, {arglist}):
+		Model.__init__(self)
 """
 
 # create model.py module (used by client script)
@@ -226,14 +226,23 @@ def __create_model(db_name, struct):
 			column_num = len(struct[table])
 			sql = "insert into {0} values(".format(table)
 			column_list = ""
+			model_class = __MODEL_INSTANCE
+			init_arg = ""
 			for i in range(column_num):
-				if struct[table][i][0] != "id":
+				col_name = struct[table][i][0]
+				model_class += "\t\tself.__{0} = {0}\n".format(col_name)
+				init_arg += col_name + ", "
+				if col_name != "id":
 					sql += "?,"
-					column_list += struct[table][i][0] + ", " # column name
+					column_list += col_name + ", "
 				else:
 					sql += "null, "
 			sql = re.sub(",$", ")", sql)
+			init_arg = re.sub(",$", "", init_arg)
 			column_list = re.sub(" $", "", column_list)
+			model.write(model_class.format(
+				table=table,
+				arglist=init_arg))
 			model.write(__MODEL_QUERY.format(
 				table=table,
 				arglist=re.sub(",$", "", column_list),
