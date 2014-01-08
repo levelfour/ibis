@@ -204,18 +204,29 @@ class {table}_query(Model):
 		self.conn.commit()
 
 	def find(self, cond={{}}):
-		list = []
+		records = []
 		sql = "select * from {table} {{}}".format(self.create_where(cond))
 		self.c.execute(sql)
-		for row in self.c:
-			list += [row]
-		return list
+		col_info = self.conn.cursor().execute("pragma table_info(parts)").fetchall()
+		for record in self.c:
+			col_dict = {{}} # {{'col_name': 'col_value',...}}
+			for col in range(len(record)):
+				col_name = col_info[col][1] # col_info: (id,name,type,notnull,dflt_value,pk)
+				col_dict[col_name] = record[col]
+			records += [{table}(col_dict)]
+		return records 
 """
 
 __MODEL_INSTANCE = """
 class {table}(Model):
-	def __init__(self, {arglist}):
+	# second arg col_list: {{'col_name': 'col_value',...}}
+	def __init__(self, col_list):
 		Model.__init__(self)
+"""
+
+__MODEL_COL_INIT = """\
+		if "{col_name}" in col_list:
+			self.__{col_name} = col_list["{col_name}"]
 """
 
 # create model.py module (used by client script)
@@ -230,7 +241,7 @@ def __create_model(db_name, struct):
 			init_arg = ""
 			for i in range(column_num):
 				col_name = struct[table][i][0]
-				model_class += "\t\tself.__{0} = {0}\n".format(col_name)
+				model_class += __MODEL_COL_INIT.format(col_name=col_name)
 				init_arg += col_name + ", "
 				if col_name != "id":
 					sql += "?,"
