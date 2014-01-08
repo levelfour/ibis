@@ -186,7 +186,7 @@ class ModelQuery:
 			print "ERROR(TODO): condition is not dict"
 			quit()
 		else:
-			r_like = re.compile("\s*like\s+(\S+)\s*", re.IGNORECASE)
+			r_like = re.compile("\s*like\s+[\\'|\\"]?([^\s\\'\\"]+)[\\'|\\"]?s*", re.IGNORECASE)
 			r_comp = re.compile("\s*(==|!=|=|>=|>|<=|<)\s*(\S+)\s*")
 			r_val = re.compile("\s*(\S+)\s*")
 			sql = "where "
