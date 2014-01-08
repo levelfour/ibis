@@ -283,9 +283,8 @@ class {table}_query(ModelQuery):
 __MODEL_CLASS_INIT = """
 class {table}(Model):
 	# second arg col_list: {{'col_name': 'col_value',...}}
-	def __init__(self, col_list):
+	def __init__(self, col_list={{}}):
 		Model.__init__(self)
-		self.field = []
 """
 
 __MODEL_COL_INIT = """\
