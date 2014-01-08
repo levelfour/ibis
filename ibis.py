@@ -167,7 +167,7 @@ __MODEL_FILE_INIT = """\
 ###############################
 import sqlite3
 import re\n
-class Model:
+class ModelQuery:
 	def __init__(self):
 		self.conn = sqlite3.connect("{0}.sqlite3")
 		self.c = self.conn.cursor()
@@ -198,7 +198,7 @@ class Model:
 					quit()
 """
 __MODEL_QUERY = """
-class {table}_query(Model):
+class {table}_query(ModelQuery):
 	def insert(self, {arglist}):
 		self.c.execute('{sql}', ({columnlist}))
 		self.conn.commit()
@@ -218,15 +218,23 @@ class {table}_query(Model):
 """
 
 __MODEL_CLASS_INIT = """
-class {table}(Model):
+class {table}():
 	def __getitem__(self, index):
-		if index in self.__field:
-			if index in self.__data:
-				return self.__data[index]
+		if isinstance(index, basestring):
+			if index in self.__field:
+				if index in self.__data:
+					return self.__data[index]
+				else:
+					return None
 			else:
-				return None
+				print "ERROR(TODO): no field such as '{{}}'".format(index)
+		elif isinstance(index, int):
+			if index < len(self.__field):
+				return self.__data[self.__field[index]]
+			else:
+				raise IndexError
 		else:
-			print "ERROR(TODO): no field such as '{{}}'".format(index)
+			return None
 
 	def __setitem__(self, index, value):
 		if index in self.__field:
@@ -234,9 +242,17 @@ class {table}(Model):
 		else:
 			print "ERROR(TODO): no field such as '{{}}'".format(index)
 
+	def next(self):
+		if self.__index > len(self.__field):
+			self.__index = 0
+			raise StopIteration
+		else:
+			self.__index += 1
+			return self.__data[self.__field[self.__index]]
+
 	# second arg col_list: {{'col_name': 'col_value',...}}
 	def __init__(self, col_list):
-		Model.__init__(self)
+		self.__index = 0
 		self.__data = {{}}
 		self.__field = []
 """
@@ -244,7 +260,7 @@ class {table}(Model):
 __MODEL_COL_INIT = """\
 		self.__field += ["{col_name}"]
 		if "{col_name}" in col_list:
-			self.__data["{col_name}"] = col_list["{col_name}"]
+			self["{col_name}"] = col_list["{col_name}"]
 """
 
 # create model.py module (used by client script)
