@@ -214,6 +214,7 @@ class Model:
 		self.__data = {{}}
 		self.field = []
 
+	# is there enough column set in self
 	def suffice(self):
 		for column in self:
 			if column == None:
@@ -275,6 +276,11 @@ class {table}_query(ModelQuery):
 		self.c.execute('{add_sql}', column_list)
 		self.conn.commit()
 
+	def delete(self, cond):
+		sql = "delete from {table} {{}}".format(self.create_where(cond))
+		self.c.execute(sql)
+		self.conn.commit()
+
 	def find(self, cond={{}}):
 		records = []
 		sql = "select * from {table} {{}}".format(self.create_where(cond))
@@ -287,6 +293,13 @@ class {table}_query(ModelQuery):
 				col_dict[col_name] = record[col]
 			records += [{table}(col_dict)]
 		return records 
+
+	def show(self, cond={{}}):
+		for record in self.find(cond):
+			info = "|"
+			for column in record:
+				info += str(column) + "|"
+			print info
 """
 
 __MODEL_CLASS_INIT = """
