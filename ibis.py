@@ -217,16 +217,34 @@ class {table}_query(Model):
 		return records 
 """
 
-__MODEL_INSTANCE = """
+__MODEL_CLASS_INIT = """
 class {table}(Model):
+	def __getitem__(self, index):
+		if index in self.__field:
+			if index in self.__data:
+				return self.__data[index]
+			else:
+				return None
+		else:
+			print "ERROR(TODO): no field such as '{{}}'".format(index)
+
+	def __setitem__(self, index, value):
+		if index in self.__field:
+			self.__data[index] = value
+		else:
+			print "ERROR(TODO): no field such as '{{}}'".format(index)
+
 	# second arg col_list: {{'col_name': 'col_value',...}}
 	def __init__(self, col_list):
 		Model.__init__(self)
+		self.__data = {{}}
+		self.__field = []
 """
 
 __MODEL_COL_INIT = """\
+		self.__field += ["{col_name}"]
 		if "{col_name}" in col_list:
-			self.__{col_name} = col_list["{col_name}"]
+			self.__data["{col_name}"] = col_list["{col_name}"]
 """
 
 # create model.py module (used by client script)
@@ -237,7 +255,7 @@ def __create_model(db_name, struct):
 			column_num = len(struct[table])
 			sql = "insert into {0} values(".format(table)
 			column_list = ""
-			model_class = __MODEL_INSTANCE
+			model_class = __MODEL_CLASS_INIT
 			init_arg = ""
 			for i in range(column_num):
 				col_name = struct[table][i][0]
