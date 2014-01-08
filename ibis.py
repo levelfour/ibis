@@ -171,9 +171,11 @@ class ModelQuery:
 	def __init__(self):
 		self.conn = sqlite3.connect("{0}.sqlite3")
 		self.c = self.conn.cursor()
+
 	def __del__(self):
 		self.conn.close()
 		del self
+
 	def create_where(self, list):
 		if not isinstance(list, type(dict())):
 			print "ERROR(TODO): condition is not dict"
@@ -196,18 +198,79 @@ class ModelQuery:
 				else:
 					print "ERROR(TODO): wrong pattern for sql"
 					quit()
+
+class Model:
+	def __init__(self):
+		self.__index = 0
+		self.__data = {{}}
+		self.field = []
+
+	def suffice(self):
+		for column in self:
+			if column == None:
+				return False
+		return True
+
+	def __getitem__(self, index):
+		if isinstance(index, basestring):
+			if index in self.field:
+				if index in self.__data:
+					return self.__data[index]
+				else:
+					return None
+			else:
+				print "ERROR(TODO): no field such as '{{}}'".format(index)
+		elif isinstance(index, int):
+			if 0 <= index and index < len(self.field):
+				if self.field[index] in self.__data:
+					return self.__data[self.field[index]]
+				else: # index not yet set
+					return None
+			else: # invalid index
+				raise IndexError
+		else:
+			return None
+
+	def __setitem__(self, index, value):
+		if index in self.field:
+			self.__data[index] = value
+		else:
+			print "ERROR(TODO): no field such as '{{}}'".format(index)
+
+	def next(self):
+		if self.__index > len(self.field):
+			self.__index = 0
+			raise StopIteration
+		else:
+			self.__index += 1
+			if self.field[self.__index] in self.__data:
+				return self.__data[self.field[self.__index]]
+			else:
+				return None
 """
 __MODEL_QUERY = """
 class {table}_query(ModelQuery):
 	def insert(self, {arglist}):
-		self.c.execute('{sql}', ({columnlist}))
+		self.c.execute('{insert_sql}', ({columnlist}))
+		self.conn.commit()
+
+	def add(self, record):
+		column_list = []
+		if not isinstance(record, {table}):
+			pass # ERROR(TODO)
+		elif not record.suffice():
+			print "ERROR(TODO): model do not have enough field"
+			quit()
+		for column in record:
+			column_list += [column]
+		self.c.execute('{add_sql}', column_list)
 		self.conn.commit()
 
 	def find(self, cond={{}}):
 		records = []
 		sql = "select * from {table} {{}}".format(self.create_where(cond))
 		self.c.execute(sql)
-		col_info = self.conn.cursor().execute("pragma table_info(parts)").fetchall()
+		col_info = self.conn.cursor().execute("pragma table_info({table})").fetchall()
 		for record in self.c:
 			col_dict = {{}} # {{'col_name': 'col_value',...}}
 			for col in range(len(record)):
@@ -218,47 +281,15 @@ class {table}_query(ModelQuery):
 """
 
 __MODEL_CLASS_INIT = """
-class {table}():
-	def __getitem__(self, index):
-		if isinstance(index, basestring):
-			if index in self.__field:
-				if index in self.__data:
-					return self.__data[index]
-				else:
-					return None
-			else:
-				print "ERROR(TODO): no field such as '{{}}'".format(index)
-		elif isinstance(index, int):
-			if index < len(self.__field):
-				return self.__data[self.__field[index]]
-			else:
-				raise IndexError
-		else:
-			return None
-
-	def __setitem__(self, index, value):
-		if index in self.__field:
-			self.__data[index] = value
-		else:
-			print "ERROR(TODO): no field such as '{{}}'".format(index)
-
-	def next(self):
-		if self.__index > len(self.__field):
-			self.__index = 0
-			raise StopIteration
-		else:
-			self.__index += 1
-			return self.__data[self.__field[self.__index]]
-
+class {table}(Model):
 	# second arg col_list: {{'col_name': 'col_value',...}}
 	def __init__(self, col_list):
-		self.__index = 0
-		self.__data = {{}}
-		self.__field = []
+		Model.__init__(self)
+		self.field = []
 """
 
 __MODEL_COL_INIT = """\
-		self.__field += ["{col_name}"]
+		self.field += ["{col_name}"]
 		if "{col_name}" in col_list:
 			self["{col_name}"] = col_list["{col_name}"]
 """
@@ -269,7 +300,8 @@ def __create_model(db_name, struct):
 		model.write(__MODEL_FILE_INIT.format(db_name))
 		for table in struct:
 			column_num = len(struct[table])
-			sql = "insert into {0} values(".format(table)
+			insert_sql = "insert into {0} values(".format(table)
+			add_sql = "insert into {0} values(".format(table)
 			column_list = ""
 			model_class = __MODEL_CLASS_INIT
 			init_arg = ""
@@ -277,12 +309,14 @@ def __create_model(db_name, struct):
 				col_name = struct[table][i][0]
 				model_class += __MODEL_COL_INIT.format(col_name=col_name)
 				init_arg += col_name + ", "
+				add_sql += "?,"
 				if col_name != "id":
-					sql += "?,"
+					insert_sql += "?,"
 					column_list += col_name + ", "
 				else:
-					sql += "null, "
-			sql = re.sub(",$", ")", sql)
+					insert_sql += "null, "
+			insert_sql = re.sub(",$", ")", insert_sql)
+			add_sql = re.sub(",$", ")", add_sql)
 			init_arg = re.sub(",$", "", init_arg)
 			column_list = re.sub(" $", "", column_list)
 			model.write(model_class.format(
@@ -292,7 +326,8 @@ def __create_model(db_name, struct):
 				table=table,
 				arglist=re.sub(",$", "", column_list),
 				columnlist=column_list,
-				sql=sql))
+				insert_sql=insert_sql,
+				add_sql=add_sql,))
 
 # construct sqlite3 database
 def __create_orm(schema):
