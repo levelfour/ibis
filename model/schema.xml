@@ -129,14 +129,14 @@
 	</table>
 	<table name="parts">
 		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
-		<column name="title" type="varchar" size="32" />
+		<column name="name" type="varchar" size="32" />
 	</table>
 	<table name="rooms">
 		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
-		<column name="title" type="varchar" size="32" />
+		<column name="name" type="varchar" size="32" />
 	</table>
 	<table name="jobs">
 		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
-		<column name="title" type="varchar" size="32" />
+		<column name="name" type="varchar" size="32" />
 	</table>
 </database>

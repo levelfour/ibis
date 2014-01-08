@@ -165,7 +165,8 @@ __MODEL_FILE_INIT = """\
 ###############################
 # Ibis Model
 ###############################
-import sqlite3\n
+import sqlite3
+import re\n
 class Model:
 	def __init__(self):
 		self.conn = sqlite3.connect("{0}.sqlite3")
@@ -173,6 +174,28 @@ class Model:
 	def __del__(self):
 		self.conn.close()
 		del self
+	def create_where(self, list):
+		if not isinstance(list, type(dict())):
+			print "ERROR(TODO): condition is not dict"
+			quit()
+		if len(list) == 0 or list["condition"] == "all":
+			return ""
+		elif not isinstance(list["condition"], type(dict())):
+			print "ERROR(TODO): condition is not dict"
+			quit()
+		else:
+			r_like = re.compile("\s*like\s+(\S+)\s*", re.IGNORECASE)
+			r_val = re.compile("\s*(\S+)\s*")
+			for col_name in list["condition"]:
+				if r_like.findall(list["condition"][col_name]) != []:
+					pattern = r_like.findall(list["condition"][col_name])[0]
+					return "where {{}} like '{{}}'".format(col_name, pattern)
+				elif r_val.findall(list["condition"][col_name]) != []:
+					value = r_val.findall(list["condition"][col_name])[0]
+					return "where {{}} = '{{}}'".format(col_name, value)
+				else:
+					print "ERROR(TODO): wrong pattern for sql"
+					quit()
 """
 __MODEL_QUERY = """
 class {table}_query(Model):
@@ -180,16 +203,9 @@ class {table}_query(Model):
 		self.c.execute('{sql}', ({columnlist}))
 		self.conn.commit()
 
-	def find(self, condition={{}}):
-		if not isinstance(condition, type(dict())):
-			print "ERROR(TODO): 2nd arg of find is not dict"
-			quit()
+	def find(self, cond={{}}):
 		list = []
-		sql = ""
-		if len(condition) == 0 or condition["condition"] == "all":
-			sql = "select * from {table}"
-		else:
-			print "ERROR(TODO): 2nd arg of find has invalid format"
+		sql = "select * from {table} {{}}".format(self.create_where(cond))
 		self.c.execute(sql)
 		for row in self.c:
 			list += [row]
