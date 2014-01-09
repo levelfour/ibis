@@ -1,20 +1,52 @@
 #!/usr/bin/env python
 # coding: utf-8
 import os, sys, traceback
+import cgi
 import re
 import logging
 
 LOG_FILE_PATH = "tmp/log/debug.log"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-def __debug(msg):
+# print CGI debug info
+def info():
+	print cgi.test()
+
+# output log to logger
+def debug(msg):
 	global logger
 	logger.debug(msg)
 
-def __error(msg):
+# output error log to logger
+def error(msg):
 	global logger
 	logger.error(msg)
 	quit()
+
+class Post:
+	def __init__(self):
+		self.__form = cgi.FieldStorage()
+		self.__index = 0
+		self.__keys = []
+		for key in self.__form:
+			self.__keys += [key]
+	
+	def __getitem__(self, key):
+		if key in self.__form:
+			return self.__form.getvalue(key)
+		else:
+			print "undefined key `{}` for post data".format(key)
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		self.__index += 1
+		if self.__index > len(self.__form):
+			self.__index = 0
+			raise StopIteration
+		else:
+			return self.__keys[self.__index - 1]
 
 ######################################################################
 # + class: IbisObject
@@ -155,6 +187,7 @@ class View(IbisObject):
 ######################################################################
 # Shell Mode
 ######################################################################
+import cgi
 import cgitb
 import sqlite3
 from xml.etree.ElementTree import *
@@ -420,6 +453,8 @@ if not __name__ == "__main__":
 	_server = {}
 	for key in os.environ:
 		_server[key] = os.environ[key]
+	global post
+	post = Post()
 else:
 ######################################################################
 # main stream
