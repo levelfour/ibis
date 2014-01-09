@@ -23,6 +23,19 @@ def error(msg):
 	logger.error(msg)
 	quit()
 
+class Get:
+	def __init__(self, server):
+		if "QUERY_STRING" in server:
+			self.__qs = cgi.parse_qs(server["QUERY_STRING"])
+		else:
+			self.__qs = {}
+	
+	def __getitem__(self, key):
+		if key in self.__qs:
+			return self.__qs[key]
+		else:
+			print "undefined key `{}` for GET data".format(key)
+
 class Post:
 	def __init__(self):
 		self.__form = cgi.FieldStorage()
@@ -35,7 +48,7 @@ class Post:
 		if key in self.__form:
 			return self.__form.getvalue(key)
 		else:
-			print "undefined key `{}` for post data".format(key)
+			print "undefined key `{}` for POST data".format(key)
 
 	def __iter__(self):
 		return self
@@ -47,6 +60,15 @@ class Post:
 			raise StopIteration
 		else:
 			return self.__keys[self.__index - 1]
+
+class Request:
+	def __init__(self):
+		self.server = {}
+		self.post = Post()
+		self.get = Get(self.server)
+		for key in os.environ:
+			self.server[key] = os.environ[key]
+
 
 ######################################################################
 # + class: IbisObject
@@ -449,12 +471,8 @@ def __create_orm(schema):
 if not __name__ == "__main__":
 	cgitb.enable()
 	print "Content-Type: text/html\n\n"
-	global _server
-	_server = {}
-	for key in os.environ:
-		_server[key] = os.environ[key]
-	global post
-	post = Post()
+	global request
+	request = Request()
 else:
 ######################################################################
 # main stream
