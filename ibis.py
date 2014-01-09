@@ -161,6 +161,9 @@ from xml.etree.ElementTree import *
 SCHEMA_PATH = "./schema.xml"
 MODEL_BUILD_PATH = "./model.py"
 
+######################################################################
+# Model Templetes
+######################################################################
 __MODEL_FILE_INIT = """\
 ###############################
 # Ibis Model
@@ -171,6 +174,7 @@ class ModelQuery:
 	def __init__(self):
 		self.conn = sqlite3.connect("{0}.sqlite3")
 		self.c = self.conn.cursor()
+		self.field = []
 
 	def __del__(self):
 		self.conn.close()
@@ -191,20 +195,23 @@ class ModelQuery:
 			r_val = re.compile("\s*(\S+)\s*")
 			sql = "where "
 			for col_name in list["condition"]:
-				if r_like.findall(list["condition"][col_name]) != []:
-					for pattern in r_like.findall(list["condition"][col_name]):
-						sql += "{{}} like '{{}}' and ".format(col_name, pattern)
-				elif r_comp.findall(list["condition"][col_name]) != []:
-					for cond in r_comp.findall(list["condition"][col_name]):
-						operator = cond[0]
-						value = cond[1]
-						sql += "{{}} {{}} '{{}}' and ".format(col_name, operator, value)
-				elif r_val.findall(list["condition"][col_name]) != []:
-					value = r_val.findall(list["condition"][col_name])[0]
-					sql += "{{}} = '{{}}' and ".format(col_name, value)
-				else:
-					print "ERROR(TODO): wrong pattern for sql"
-					quit()
+				if isinstance(list["condition"][col_name], str):
+					if r_like.findall(list["condition"][col_name]) != []:
+						for pattern in r_like.findall(list["condition"][col_name]):
+							sql += "{{}} like '{{}}' and ".format(col_name, pattern)
+					elif r_comp.findall(list["condition"][col_name]) != []:
+						for cond in r_comp.findall(list["condition"][col_name]):
+							operator = cond[0]
+							value = cond[1]
+							sql += "{{}} {{}} '{{}}' and ".format(col_name, operator, value)
+					elif r_val.findall(list["condition"][col_name]) != []:
+						value = r_val.findall(list["condition"][col_name])[0]
+						sql += "{{}} = '{{}}' and ".format(col_name, value)
+					else:
+						print "ERROR(TODO): wrong pattern for sql"
+						quit()
+				elif isinstance(list["condition"][col_name], int):
+					sql += "{{}} = {{}}".format(col_name, list["condition"][col_name])
 			sql = re.sub(" and $", "", sql)
 			return sql
 
@@ -260,6 +267,13 @@ class Model:
 """
 __MODEL_QUERY = """
 class {table}_query(ModelQuery):
+	def __init__(self):
+		ModelQuery.__init__(self)
+		# col_info: (id,name,type,notnull,dflt_value,pk)
+		col_info = self.conn.cursor().execute("pragma table_info({table})").fetchall()
+		for col in col_info:
+			self.field += [col[1]]
+
 	def insert(self, {arglist}):
 		self.c.execute('{insert_sql}', ({columnlist}))
 		self.conn.commit()
@@ -276,6 +290,18 @@ class {table}_query(ModelQuery):
 		self.c.execute('{add_sql}', column_list)
 		self.conn.commit()
 
+	def update(self, cond={{}}, value={{}}):
+		if value == {{}}:
+			pass # ERROR(TODO)
+		sql = "update {table} set "
+		where = self.create_where(cond)
+		for col in self.field:
+			if col in value:
+				sql += "{{}} = '{{}}', ".format(col, value[col])
+		sql = re.sub(", $", " "+where , sql)
+		self.c.execute(sql)
+		self.conn.commit()
+
 	def delete(self, cond):
 		sql = "delete from {table} {{}}".format(self.create_where(cond))
 		self.c.execute(sql)
@@ -285,11 +311,10 @@ class {table}_query(ModelQuery):
 		records = []
 		sql = "select * from {table} {{}}".format(self.create_where(cond))
 		self.c.execute(sql)
-		col_info = self.conn.cursor().execute("pragma table_info({table})").fetchall()
 		for record in self.c:
 			col_dict = {{}} # {{'col_name': 'col_value',...}}
-			for col in range(len(record)):
-				col_name = col_info[col][1] # col_info: (id,name,type,notnull,dflt_value,pk)
+			for col in range(len(self.field)):
+				col_name = self.field[col]
 				col_dict[col_name] = record[col]
 			records += [{table}(col_dict)]
 		return records 
@@ -314,6 +339,10 @@ __MODEL_COL_INIT = """\
 		if "{col_name}" in col_list:
 			self["{col_name}"] = col_list["{col_name}"]
 """
+
+######################################################################
+# Function
+######################################################################
 
 # create model.py module (used by client script)
 def __create_model(db_name, struct):
