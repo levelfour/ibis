@@ -9,5 +9,5 @@ if __name__ == "__main__":
 	for v in ibis.request.post:
 		print "form[{}]: {}<br />".format(v, ibis.request.post[v])
 	
-#	for v in ibis.request.get:
-#		print "qs[{}]: {}<br />".format(v, ibis.request.get[v])
+	for v in ibis.request.get:
+		print "qs[{}]: {}<br />".format(v, ibis.request.get[v])

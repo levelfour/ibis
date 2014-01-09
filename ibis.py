@@ -25,16 +25,34 @@ def error(msg):
 
 class Get:
 	def __init__(self, server):
+		self.__index = 0
+		self.__keys = []
 		if "QUERY_STRING" in server:
 			self.__qs = cgi.parse_qs(server["QUERY_STRING"])
+			for key in self.__qs:
+				self.__keys += [key]
 		else:
 			self.__qs = {}
 	
 	def __getitem__(self, key):
 		if key in self.__qs:
-			return self.__qs[key]
+			if len(self.__qs[key]) == 1:
+				return self.__qs[key][0]
+			else:
+				return self.__qs[key]
 		else:
 			print "undefined key `{}` for GET data".format(key)
+
+	def __iter__(self):
+		return self
+
+	def next(self):
+		self.__index += 1
+		if self.__index > len(self.__qs):
+			self.__index = 0
+			raise StopIteration
+		else:
+			return self.__keys[self.__index - 1]
 
 class Post:
 	def __init__(self):
@@ -64,11 +82,10 @@ class Post:
 class Request:
 	def __init__(self):
 		self.server = {}
-		self.post = Post()
-		self.get = Get(self.server)
 		for key in os.environ:
 			self.server[key] = os.environ[key]
-
+		self.post = Post()
+		self.get = Get(self.server)
 
 ######################################################################
 # + class: IbisObject
