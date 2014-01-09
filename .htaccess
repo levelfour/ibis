@@ -1,4 +1,5 @@
 IndexIgnore */*
+DirectoryIndex index.cgi
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
