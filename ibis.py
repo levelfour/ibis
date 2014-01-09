@@ -50,6 +50,7 @@ class IbisObject:
 	def error_log(self, msg=""):
 		self.logger.error(msg)
 
+
 ######################################################################
 # + class: View
 # + desc: render HTML
@@ -415,6 +416,10 @@ def __create_orm(schema):
 if not __name__ == "__main__":
 	cgitb.enable()
 	print "Content-Type: text/html\n\n"
+	global _server
+	_server = {}
+	for key in os.environ:
+		_server[key] = os.environ[key]
 else:
 ######################################################################
 # main stream
