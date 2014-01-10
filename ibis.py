@@ -23,6 +23,10 @@ def error(msg):
 	logger.error(msg)
 	quit()
 
+######################################################################
+# + class: Get
+# + desc: GET request data
+######################################################################
 class Get:
 	def __init__(self, server):
 		self.__index = 0
@@ -54,6 +58,10 @@ class Get:
 		else:
 			return self.__keys[self.__index - 1]
 
+######################################################################
+# + class: Post
+# + desc: POST request data
+######################################################################
 class Post:
 	def __init__(self):
 		self.__form = cgi.FieldStorage()
@@ -79,6 +87,10 @@ class Post:
 		else:
 			return self.__keys[self.__index - 1]
 
+######################################################################
+# + class: Request
+# + desc: combine Get and Post with $_SERVER
+######################################################################
 class Request:
 	def __init__(self):
 		self.server = {}
@@ -88,14 +100,15 @@ class Request:
 		self.get = Get(self.server)
 
 ######################################################################
-# + class: IbisObject
+# + class: ibis
 # + desc: root object in Ibis library
 ######################################################################
-class IbisObject:
+class ibis:
 	def __init__(self):
 		self.logger = logging.getLogger(self.__class__.__name__)
 		self.log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
 		self.__open_log_file()
+		self.request = Request()
 
 	def __del__(self):
 		self.log_file.close()
@@ -126,9 +139,9 @@ class IbisObject:
 # + class: View
 # + desc: render HTML
 ######################################################################
-class View(IbisObject):
+class View(ibis):
 	def __init__(self):
-		IbisObject.__init__(self)
+		ibis.__init__(self)
 		self.__set_var = {}
 		self.__set_arr = {}
 		self.layout('lib/default/layout.html')
