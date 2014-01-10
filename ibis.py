@@ -45,7 +45,7 @@ class Get:
 			else:
 				return self.__qs[key]
 		else:
-			print "undefined key `{}` for GET data".format(key)
+			ibis.error_log("undefined key `{}` for GET data".format(key))
 
 	def __iter__(self):
 		return self
@@ -74,7 +74,7 @@ class Post:
 		if key in self.__form:
 			return self.__form.getvalue(key)
 		else:
-			print "undefined key `{}` for POST data".format(key)
+			ibis.error_log("undefined key `{}` for POST data".format(key))
 
 	def __iter__(self):
 		return self
@@ -104,9 +104,10 @@ class Request:
 # + desc: root object in Ibis library
 ######################################################################
 class ibis:
+	logger = logging.getLogger("ibis")
+	log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
+
 	def __init__(self):
-		self.logger = logging.getLogger(self.__class__.__name__)
-		self.log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
 		self.__open_log_file()
 		self.request = Request()
 
@@ -123,16 +124,18 @@ class ibis:
 				os.chmod(LOG_FILE_PATH, 0666)
 			logging.basicConfig(filename=LOG_FILE_PATH,
 					            level=logging.DEBUG,
-								format=self.log_format,
+								format=ibis.log_format,
 								datefmt=DATE_FORMAT,)
 		except Exception, (msg):
 			__error(msg)
 
-	def log(self, msg=""):
-		self.logger.debug(msg)
+	@classmethod
+	def log(cls, msg=""):
+		cls.logger.debug(msg)
 
-	def error_log(self, msg=""):
-		self.logger.error(msg)
+	@classmethod
+	def error_log(cls, msg=""):
+		cls.logger.error(msg)
 
 
 ######################################################################
@@ -480,7 +483,7 @@ def __create_orm(schema):
 		sql = "create table if not exists %s (" % table_name
 		# no table column -> exception
 		if len(table.findall(".//column")) == 0:
-			__error("no column in table `%s`" % table_name)
+			ibis.error_log("no column in table `%s`" % table_name)
 		db_struct[table_name] = []
 		for column in table.findall(".//column"):
 			name = column.get("name")
@@ -522,12 +525,12 @@ else:
 					with open(filename, "r") as xmlfile:
 						__create_orm(xmlfile)
 				except IOError, (msg):
-					__error(msg)
+					error(msg)
 			else:
 				try:
 					with open(SCHEMA_PATH, "r") as xmlfile:
 						__create_orm(xmlfile)
 				except IOError:
-					__error("prepare XML schema file named `%s`" % SCHEMA_PATH)
+					error("prepare XML schema file named `%s`" % SCHEMA_PATH)
 		else:
 			print "show help" # TODO
