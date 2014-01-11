@@ -8,7 +8,7 @@ if __name__ == "__main__":
 	v.layout('view/layout.html')
 	v.render('view/content.html')
 
-	for v in app.request.get:
-		print "qs[{}] = {}<br />".format(v, app.request.get[v])
-
-	app.request.get["invalid"]
+	for v in app.request.post:
+		print "post[{}] = {}<br />".format(v, app.request.post[v])
+	
+	app.request.isAjax()

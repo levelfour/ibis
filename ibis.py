@@ -99,6 +99,21 @@ class Request:
 		self.post = Post()
 		self.get = Get(self.server)
 
+	@classmethod
+	def isGet(cls):
+		print os.environ["REQUEST_METHOD"] == "GET"
+
+	@classmethod
+	def isPost(cls):
+		print os.environ["REQUEST_METHOD"] == "POST"
+
+	def isAjax(self):
+		if "HTTP_X_REQUESTED_WITH" in self.server \
+				and self.server["HTTP_X_REQUESTED_WITH"].lower() == "xmlhttprequest":
+			print True
+		else:
+			print False
+
 ######################################################################
 # + class: ibis
 # + desc: root object in Ibis library
