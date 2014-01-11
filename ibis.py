@@ -339,8 +339,11 @@ class Model:
 	# is there enough column set in self
 	def suffice(self):
 		for column in self.column:
-			if not column["name"] in self.__data and column["pk"] != True:
-				return False
+			if not column["name"] in self.__data:
+				if column["dflt"] != None:
+					self.__data = column["dflt"]
+				elif column["pk"] != True:
+					return False
 		return True
 
 	def has_field(self, col_name):
@@ -536,8 +539,8 @@ def __create_orm(schema):
 			sql += "{} {} {} {} ".format(name, ctype, "not null" if notnull else "", "default '{}'".format(dflt) if dflt else "")
 			if pk:
 				sql += "primary key "
-				if column.get("autoIncrement"):
-					sql += "autoincrement "
+				#if column.get("autoIncrement"):
+				sql += "autoincrement "
 			sql += ", "
 		sql = re.sub(", $", ");", sql)
 		c.execute(sql) # create table
