@@ -493,7 +493,8 @@ def __create_model(db_name, struct):
 				arglist=re.sub(",$", "", column_list),
 				columnlist=column_list,
 				insert_sql=insert_sql,
-				add_sql=add_sql,))
+				add_sql=add_sql,
+				ID=0,NAME=1,TYPE=2,NOTNULL=3,DFLT=4,PK=5,))
 
 # construct sqlite3 database
 def __create_orm(schema):
@@ -514,17 +515,17 @@ def __create_orm(schema):
 		db_struct[table_name] = []
 		for column in table.findall(".//column"):
 			name	= column.get("name")
-			type	= column.get("type")
-			notnull	= column.get("required") if "required" in column else True
+			ctype	= column.get("type")
+			notnull	= bool(column.get("required", True))
 			dflt	= column.get("defaultValue")
-			pk		= column.get("primaryKey") if "primaryKey" in column else False
-			db_struct[table_name] += [{"name":name, "type":type, "notnull":notnull, "dflt":dflt, "pk":pk}]
+			pk		= bool(column.get("primaryKey", False))
+			db_struct[table_name] += [{"name":name, "type":ctype, "notnull":notnull, "dflt":dflt, "pk":pk}]
+			sql += "{} {} {} {} ".format(name, ctype, "not null" if notnull else "", "default '{}'".format(dflt) if dflt else "")
 			if pk:
-				sql += "{0} {1} primary key, ".format(name, type)
+				sql += "primary key "
 				if column.get("autoIncrement"):
-					sql = re.sub(", $", " autoincrement , ", sql)
-			else:
-				sql += "{0} {1}, ".format(name, type)
+					sql += "autoincrement "
+			sql += ", "
 		sql = re.sub(", $", ");", sql)
 		c.execute(sql) # create table
 	conn.commit()
