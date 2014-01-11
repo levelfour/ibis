@@ -159,6 +159,62 @@ class ibis:
 	def error_log(cls, msg=""):
 		cls.logger.error(msg)
 
+######################################################################
+# constants for view
+######################################################################
+DEFAULT_LAYOUT = """\
+<html lang="ja">
+<head>
+	<title>default</title>
+	<meta charset="utf-8" />
+	<style>
+		body {
+			font-family: "Lucida Grande", "segoe UI", "ヒラギノ丸ゴ ProN W4", "Hiragino Maru Gothic ProN", Meiryo, Arial, sans-serif;
+		}
+	</style>
+</head>
+<body>
+	$$__CONTENT__$$
+</body>
+</html>"""
+
+ERROR_CONTENT = """\
+<style>
+.error_table {border-collapse: collapse;}
+.error_table th {color: white;background-color: red;}
+.error_table td {background-color: orange;}
+.error_table tr {border: none;}
+.error_table th, .error_table td {
+	text-align: left;
+	font-size: large;
+	border: solid 3px black;
+	border-bottom: none;
+	box-sizing: border-box;
+}
+.error_table tr:last-child td {border-bottom: solid 3px black;}
+</style>
+<table class="error_table">
+	<tr><th colspan=4 style="font-size: x-large;">Ibis Error</th></tr>
+	<tr><th colspan=4>EXCEPTION POINT</th></tr>
+	<tr><th>FILE</th><th>LINE</th><th>FUNCTION</th><th>CODE</th></tr>
+	<tr>
+		<td>$$__EXCEPTION_FILE__$$</td>
+		<td>$$__EXCEPTION_LINE__$$</td>
+		<td>$$__EXCEPTION_FUNC__$$</td>
+		<td>$$__EXCEPTION_TEXT__$$</td>
+	</tr>
+	<tr><th colspan=4>STACK INFO</th></tr>
+	<tr><th>FILE</th><th>LINE</th><th>FUNCTION</th><th>CODE</th>
+	</tr>
+	@@<tr>
+		<td>$@__ERROR_FILE__$@</td>
+		<td>$@__ERROR_LINE__$@</td>
+		<td>$@__ERROR_FUNC__$@</td>
+		<td>$@__ERROR_TEXT__$@</td>
+	</tr>@@
+	<tr><th colspan=4>ERROR INFO</th></tr>
+	<tr><td colspan=4>$$__ERROR_MESSAGE__$$</td></tr>
+</table>"""
 
 ######################################################################
 # + class: View
@@ -169,7 +225,7 @@ class View(ibis):
 		ibis.__init__(self)
 		self.__set_var = {}
 		self.__set_arr = {}
-		self.layout('lib/default/layout.html')
+		self.__layout = DEFAULT_LAYOUT
 
 	def layout(self, filename):
 		try:
@@ -258,7 +314,9 @@ class View(ibis):
 		self.set('__EXCEPTION_FUNC__', str(tb_info[2]))
 		self.set('__EXCEPTION_TEXT__', str(tb_info[3]))
 		self.set('__ERROR_MESSAGE__', str(msg))
-		self.render('lib/error/error.html')
+		self.set("__CONTENT__", ERROR_CONTENT)
+		self.__layout = self.__expand(self.__layout)
+		print self.__layout
 		quit()
 
 ######################################################################
@@ -445,7 +503,10 @@ class {table}_query(ModelQuery):
 			limiter = "limit {{}}".format(cond["limit"])
 		else:
 			limiter = ""
-		sql = "select * from {table} {{}} {{}} {{}}".format(self.create_where(cond), self.create_order(cond), limiter)
+		sql = "select * from {table} {{}} {{}} {{}}".format(
+			self.create_where(cond),
+			self.create_order(cond),
+			limiter)
 		self.c.execute(sql)
 		for record in self.c:
 			col_dict = {{}} # {{'col_name': 'col_value',...}}
@@ -479,7 +540,12 @@ class {table}(Model):
 """
 
 __MODEL_COL_INIT = """\
-		self.column += [{{{{"name":"{name}","type":"{type}","notnull":{notnull},"dflt":"{dflt}","pk":{pk}}}}}]
+		self.column += [{{{{
+			"name":"{name}",
+			"type":"{type}",
+			"notnull":{notnull},
+			"dflt":"{dflt}",
+			"pk":{pk}}}}}]
 		if "{name}" in col_list:
 			self["{name}"] = col_list["{name}"]
 """
@@ -504,7 +570,12 @@ def __create_model(db_name, struct):
 			for i in range(column_num):
 				column = struct[table][i]
 				col_name = column["name"]
-				model_class += __MODEL_COL_INIT.format(name=col_name,type=column["type"],notnull=column["notnull"],dflt=column["dflt"],pk=column["pk"])
+				model_class += __MODEL_COL_INIT.format(
+						name=col_name,
+						type=column["type"],
+						notnull=column["notnull"],
+						dflt=column["dflt"],
+						pk=column["pk"])
 				init_arg += col_name + ", "
 				add_sql += "?,"
 				if col_name != "id":
@@ -549,8 +620,17 @@ def __create_orm(schema):
 			notnull	= bool(column.get("required", True))
 			dflt	= column.get("defaultValue")
 			pk		= bool(column.get("primaryKey", False))
-			db_struct[table_name] += [{"name":name, "type":ctype, "notnull":notnull, "dflt":dflt, "pk":pk}]
-			sql += "{} {} {} {} ".format(name, ctype, "not null" if notnull else "", "default '{}'".format(dflt) if dflt else "")
+			db_struct[table_name] += [{
+				"name":name, 
+				"type":ctype, 
+				"notnull":notnull, 
+				"dflt":dflt, 
+				"pk":pk}]
+			sql += "{} {} {} {} ".format(
+					name, 
+					ctype, 
+					"not null" if notnull else "",
+					"default '{}'".format(dflt) if dflt else "")
 			if pk:
 				sql += "primary key "
 				#if column.get("autoIncrement"):
