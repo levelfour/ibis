@@ -472,7 +472,7 @@ def __create_model(db_name, struct):
 			model_class = __MODEL_CLASS_INIT
 			init_arg = ""
 			for i in range(column_num):
-				col_name = struct[table][i][0]
+				col_name = struct[table][i]["name"]
 				model_class += __MODEL_COL_INIT.format(col_name=col_name)
 				init_arg += col_name + ", "
 				add_sql += "?,"
@@ -513,10 +513,13 @@ def __create_orm(schema):
 			ibis.error_log("no column in table `%s`" % table_name)
 		db_struct[table_name] = []
 		for column in table.findall(".//column"):
-			name = column.get("name")
-			type = column.get("type")
-			db_struct[table_name].append([name, type])
-			if column.get("primaryKey"):
+			name	= column.get("name")
+			type	= column.get("type")
+			notnull	= column.get("required") if "required" in column else True
+			dflt	= column.get("defaultValue")
+			pk		= column.get("primaryKey") if "primaryKey" in column else False
+			db_struct[table_name] += [{"name":name, "type":type, "notnull":notnull, "dflt":dflt, "pk":pk}]
+			if pk:
 				sql += "{0} {1} primary key, ".format(name, type)
 				if column.get("autoIncrement"):
 					sql = re.sub(", $", " autoincrement , ", sql)
@@ -530,12 +533,12 @@ def __create_orm(schema):
 	__create_model(db_name, db_struct)
 
 # do not output CGI header when this was executed by shell
-if not __name__ == "__main__":
+if not __name__ == "__main__" and "SERVER_SOFTWARE" in os.environ:
 	cgitb.enable()
 	print "Content-Type: text/html\n\n"
 	global request
 	request = Request()
-else:
+elif __name__ == "__main__":
 ######################################################################
 # main stream
 ######################################################################
