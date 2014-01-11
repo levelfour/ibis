@@ -283,12 +283,13 @@ import os, sys
 import sqlite3
 import re\n
 sys.path.append("{ibis_path}")
-import ibis\n
+import ibis
+_app = ibis.ibis()\n
 class ModelQuery:
 	def __init__(self):
 		self.conn = sqlite3.connect("{db}.sqlite3")
 		self.c = self.conn.cursor()
-		self.field = []
+		self.column = []
 
 	def __del__(self):
 		self.conn.close()
@@ -296,12 +297,12 @@ class ModelQuery:
 
 	def create_where(self, list):
 		if not isinstance(list, type(dict())):
-			ibis.ibis.error_log("condition is not dict")
+			_app.error_log("condition is not dict")
 			quit()
 		if len(list) == 0 or list["condition"] == "all":
 			return ""
 		elif not isinstance(list["condition"], type(dict())):
-			ibis.ibis.error_log("condition is not dict")
+			_app.error_log("condition is not dict")
 			quit()
 		else:
 			r_like = re.compile("\s*like\s+[\\'|\\"]?([^\s\\'\\"]+)[\\'|\\"]?s*", re.IGNORECASE)
@@ -322,7 +323,7 @@ class ModelQuery:
 						value = r_val.findall(list["condition"][col_name])[0]
 						sql += "{{}} = '{{}}' and ".format(col_name, value)
 					else:
-						ibis.ibis.error_log("wrong pattern for sql")
+						_app.error_log("wrong pattern for sql")
 						quit()
 				elif isinstance(list["condition"][col_name], int):
 					sql += "{{}} = {{}}".format(col_name, list["condition"][col_name])
@@ -333,28 +334,34 @@ class Model:
 	def __init__(self):
 		self.__index = 0
 		self.__data = {{}}
-		self.field = []
+		self.column = []
 
 	# is there enough column set in self
 	def suffice(self):
-		for column in self:
-			if column == None:
+		for column in self.column:
+			if not column["name"] in self.__data and column["pk"] != True:
 				return False
 		return True
 
+	def has_field(self, col_name):
+		for i in range(len(self.column)):
+			if self.column[i]["name"] == col_name:
+				return True
+		return False
+
 	def __getitem__(self, index):
 		if isinstance(index, basestring):
-			if index in self.field:
+			if self.has_field(index):
 				if index in self.__data:
 					return self.__data[index]
 				else:
 					return None
 			else:
-				ibis.ibis.error_log("no field such as '{{}}'".format(index))
+				_app.error_log("no field such as '{{}}'".format(index))
 		elif isinstance(index, int):
-			if 0 <= index and index < len(self.field):
-				if self.field[index] in self.__data:
-					return self.__data[self.field[index]]
+			if 0 <= index and index < len(self.column):
+				if self.column[index]["name"] in self.__data:
+					return self.__data[self.column[index]["name"]]
 				else: # index not yet set
 					return None
 			else: # invalid index
@@ -363,19 +370,19 @@ class Model:
 			return None
 
 	def __setitem__(self, index, value):
-		if index in self.field:
+		if self.has_field(index):
 			self.__data[index] = value
 		else:
-			ibis.ibis.error_log("no field such as '{{}}'".format(index))
+			_app.error_log("no field such as '{{}}'".format(index))
 
 	def next(self):
-		if self.__index > len(self.field):
+		if self.__index > len(self.column):
 			self.__index = 0
 			raise StopIteration
 		else:
 			self.__index += 1
-			if self.field[self.__index] in self.__data:
-				return self.__data[self.field[self.__index]]
+			if self.column[self.__index]["name"] in self.__data:
+				return self.__data[self.column[self.__index]["name"]]
 			else:
 				return None
 """
@@ -393,9 +400,9 @@ class {table}_query(ModelQuery):
 	def add(self, record):
 		column_list = []
 		if not isinstance(record, {table}):
-			ibis.ibis.error_log("invalid type of argument for add method")
+			_app.error_log("invalid type of argument for add method")
 		elif not record.suffice():
-			ibis.ibis.error_log("model do not have enough field")
+			_app.error_log("model do not have enough field")
 			quit()
 		for column in record:
 			column_list += [column]
@@ -404,7 +411,7 @@ class {table}_query(ModelQuery):
 
 	def update(self, cond={{}}, value={{}}):
 		if value == {{}}:
-			ibis.ibis.error_log("no update value set")	
+			_app.error_log("no update value set")	
 		sql = "update {table} set "
 		where = self.create_where(cond)
 		for col in self.column[{NAME}]:
@@ -426,7 +433,7 @@ class {table}_query(ModelQuery):
 		for record in self.c:
 			col_dict = {{}} # {{'col_name': 'col_value',...}}
 			for col in range(len(self.column)):
-				col_name = self.column[{NAME}][col]
+				col_name = self.column[col][{NAME}]
 				col_dict[col_name] = record[col]
 			records += [{table}(col_dict)]
 		return records 
@@ -436,6 +443,14 @@ class {table}_query(ModelQuery):
 			info = "|"
 			for column in record:
 				info += str(column) + "|"
+			print info
+
+	def describe(self):
+		print "|id|name|type|notnull|dflt|pk|"
+		for col in self.column:
+			info = "|"
+			for c in col:
+				info += str(c) + "|"
 			print info
 """
 
@@ -447,9 +462,9 @@ class {table}(Model):
 """
 
 __MODEL_COL_INIT = """\
-		self.field += ["{col_name}"]
-		if "{col_name}" in col_list:
-			self["{col_name}"] = col_list["{col_name}"]
+		self.column += [{{{{"name":"{name}","type":"{type}","notnull":{notnull},"dflt":"{dflt}","pk":{pk}}}}}]
+		if "{name}" in col_list:
+			self["{name}"] = col_list["{name}"]
 """
 
 ######################################################################
@@ -470,8 +485,9 @@ def __create_model(db_name, struct):
 			model_class = __MODEL_CLASS_INIT
 			init_arg = ""
 			for i in range(column_num):
-				col_name = struct[table][i]["name"]
-				model_class += __MODEL_COL_INIT.format(col_name=col_name)
+				column = struct[table][i]
+				col_name = column["name"]
+				model_class += __MODEL_COL_INIT.format(name=col_name,type=column["type"],notnull=column["notnull"],dflt=column["dflt"],pk=column["pk"])
 				init_arg += col_name + ", "
 				add_sql += "?,"
 				if col_name != "id":
@@ -483,9 +499,8 @@ def __create_model(db_name, struct):
 			add_sql = re.sub(",$", ")", add_sql)
 			init_arg = re.sub(",$", "", init_arg)
 			column_list = re.sub(" $", "", column_list)
-			model.write(model_class.format(
-				table=table,
-				arglist=init_arg))
+			model_class = re.sub("$", "\n", model_class)
+			model.write(model_class.format(table=table))
 			model.write(__MODEL_QUERY.format(
 				table=table,
 				arglist=re.sub(",$", "", column_list),
