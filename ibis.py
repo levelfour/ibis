@@ -101,11 +101,17 @@ class Request:
 
 	@classmethod
 	def isGet(cls):
-		return os.environ["REQUEST_METHOD"] == "GET"
+		if "REQUEST_METHOD" in os.environ:
+			return os.environ["REQUEST_METHOD"] == "GET"
+		else:
+			return False
 
 	@classmethod
 	def isPost(cls):
-		return os.environ["REQUEST_METHOD"] == "POST"
+		if "REQUEST_METHOD" in os.environ:
+			return os.environ["REQUEST_METHOD"] == "POST"
+		else:
+			return False
 
 	def isAjax(self):
 		if "HTTP_X_REQUESTED_WITH" in self.server \
