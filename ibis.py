@@ -278,7 +278,6 @@ import sqlite3
 import re\n
 sys.path.append("{ibis_path}")
 import ibis\n
-model_app = ibis.ibis()\n
 class ModelQuery:
 	def __init__(self):
 		self.conn = sqlite3.connect("{db}.sqlite3")
@@ -291,12 +290,12 @@ class ModelQuery:
 
 	def create_where(self, list):
 		if not isinstance(list, type(dict())):
-			model_app.error_log("condition is not dict")
+			ibis.ibis.error_log("condition is not dict")
 			quit()
 		if len(list) == 0 or list["condition"] == "all":
 			return ""
 		elif not isinstance(list["condition"], type(dict())):
-			model_app.error_log("condition is not dict")
+			ibis.ibis.error_log("condition is not dict")
 			quit()
 		else:
 			r_like = re.compile("\s*like\s+[\\'|\\"]?([^\s\\'\\"]+)[\\'|\\"]?s*", re.IGNORECASE)
@@ -317,7 +316,7 @@ class ModelQuery:
 						value = r_val.findall(list["condition"][col_name])[0]
 						sql += "{{}} = '{{}}' and ".format(col_name, value)
 					else:
-						model_app.error_log("wrong pattern for sql")
+						ibis.ibis.error_log("wrong pattern for sql")
 						quit()
 				elif isinstance(list["condition"][col_name], int):
 					sql += "{{}} = {{}}".format(col_name, list["condition"][col_name])
@@ -345,7 +344,7 @@ class Model:
 				else:
 					return None
 			else:
-				model_app.error_log("no field such as '{{}}'".format(index))
+				ibis.ibis.error_log("no field such as '{{}}'".format(index))
 		elif isinstance(index, int):
 			if 0 <= index and index < len(self.field):
 				if self.field[index] in self.__data:
@@ -361,7 +360,7 @@ class Model:
 		if index in self.field:
 			self.__data[index] = value
 		else:
-			model_app.error_log("no field such as '{{}}'".format(index))
+			ibis.ibis.error_log("no field such as '{{}}'".format(index))
 
 	def next(self):
 		if self.__index > len(self.field):
@@ -390,9 +389,9 @@ class {table}_query(ModelQuery):
 	def add(self, record):
 		column_list = []
 		if not isinstance(record, {table}):
-			model_app.error_log("invalid type of argument for add method")
+			ibis.ibis.error_log("invalid type of argument for add method")
 		elif not record.suffice():
-			model_app.error_log("model do not have enough field")
+			ibis.ibis.error_log("model do not have enough field")
 			quit()
 		for column in record:
 			column_list += [column]
@@ -401,7 +400,7 @@ class {table}_query(ModelQuery):
 
 	def update(self, cond={{}}, value={{}}):
 		if value == {{}}:
-			model_app.error_log("no update value set")	
+			ibis.ibis.error_log("no update value set")	
 		sql = "update {table} set "
 		where = self.create_where(cond)
 		for col in self.field:
