@@ -5,7 +5,7 @@ import cgi
 import re
 import logging
 
-LOG_FILE_PATH = "tmp/log/debug.log"
+LOG_FILE_PATH = os.path.dirname(os.path.abspath(__file__)) + "/tmp/log/debug.log"
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 # print CGI debug info
@@ -127,7 +127,8 @@ class ibis:
 								format=ibis.log_format,
 								datefmt=DATE_FORMAT,)
 		except Exception, (msg):
-			__error(msg)
+			print msg
+			quit()
 
 	@classmethod
 	def log(cls, msg=""):
@@ -257,11 +258,15 @@ __MODEL_FILE_INIT = """\
 ###############################
 # Ibis Model
 ###############################
+import os, sys
 import sqlite3
 import re\n
+sys.path.append("{ibis_path}")
+import ibis\n
+model_app = ibis.ibis()\n
 class ModelQuery:
 	def __init__(self):
-		self.conn = sqlite3.connect("{0}.sqlite3")
+		self.conn = sqlite3.connect("{db}.sqlite3")
 		self.c = self.conn.cursor()
 		self.field = []
 
@@ -271,12 +276,12 @@ class ModelQuery:
 
 	def create_where(self, list):
 		if not isinstance(list, type(dict())):
-			print "ERROR(TODO): condition is not dict"
+			model_app.error_log("condition is not dict")
 			quit()
 		if len(list) == 0 or list["condition"] == "all":
 			return ""
 		elif not isinstance(list["condition"], type(dict())):
-			print "ERROR(TODO): condition is not dict"
+			model_app.error_log("condition is not dict")
 			quit()
 		else:
 			r_like = re.compile("\s*like\s+[\\'|\\"]?([^\s\\'\\"]+)[\\'|\\"]?s*", re.IGNORECASE)
@@ -297,7 +302,7 @@ class ModelQuery:
 						value = r_val.findall(list["condition"][col_name])[0]
 						sql += "{{}} = '{{}}' and ".format(col_name, value)
 					else:
-						print "ERROR(TODO): wrong pattern for sql"
+						model_app.error_log("wrong pattern for sql")
 						quit()
 				elif isinstance(list["condition"][col_name], int):
 					sql += "{{}} = {{}}".format(col_name, list["condition"][col_name])
@@ -325,7 +330,7 @@ class Model:
 				else:
 					return None
 			else:
-				print "ERROR(TODO): no field such as '{{}}'".format(index)
+				model_app.error_log("no field such as '{{}}'".format(index))
 		elif isinstance(index, int):
 			if 0 <= index and index < len(self.field):
 				if self.field[index] in self.__data:
@@ -341,7 +346,7 @@ class Model:
 		if index in self.field:
 			self.__data[index] = value
 		else:
-			print "ERROR(TODO): no field such as '{{}}'".format(index)
+			model_app.error_log("no field such as '{{}}'".format(index))
 
 	def next(self):
 		if self.__index > len(self.field):
@@ -370,9 +375,9 @@ class {table}_query(ModelQuery):
 	def add(self, record):
 		column_list = []
 		if not isinstance(record, {table}):
-			pass # ERROR(TODO)
+			model_app.error_log("invalid type of argument for add method")
 		elif not record.suffice():
-			print "ERROR(TODO): model do not have enough field"
+			model_app.error_log("model do not have enough field")
 			quit()
 		for column in record:
 			column_list += [column]
@@ -381,7 +386,7 @@ class {table}_query(ModelQuery):
 
 	def update(self, cond={{}}, value={{}}):
 		if value == {{}}:
-			pass # ERROR(TODO)
+			model_app.error_log("no update value set")	
 		sql = "update {table} set "
 		where = self.create_where(cond)
 		for col in self.field:
@@ -436,7 +441,9 @@ __MODEL_COL_INIT = """\
 # create model.py module (used by client script)
 def __create_model(db_name, struct):
 	with open(MODEL_BUILD_PATH, "w") as model:
-		model.write(__MODEL_FILE_INIT.format(db_name))
+		model.write(__MODEL_FILE_INIT.format(
+			ibis_path=os.path.dirname(os.path.abspath(__file__)),
+			db=db_name))
 		for table in struct:
 			column_num = len(struct[table])
 			insert_sql = "insert into {0} values(".format(table)
