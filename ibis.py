@@ -298,12 +298,10 @@ class ModelQuery:
 	def create_where(self, list):
 		if not isinstance(list, type(dict())):
 			_app.error_log("condition is not dict")
-			quit()
-		if len(list) == 0 or list["condition"] == "all":
+		if not "condition" in list or list["condition"] == "all":
 			return ""
 		elif not isinstance(list["condition"], type(dict())):
 			_app.error_log("condition is not dict")
-			quit()
 		else:
 			r_like = re.compile("\s*like\s+[\\'|\\"]?([^\s\\'\\"]+)[\\'|\\"]?s*", re.IGNORECASE)
 			r_comp = re.compile("\s*(==|!=|=|>=|>|<=|<)\s*(\S+)\s*")
@@ -324,11 +322,23 @@ class ModelQuery:
 						sql += "{{}} = '{{}}' and ".format(col_name, value)
 					else:
 						_app.error_log("wrong pattern for sql")
-						quit()
 				elif isinstance(list["condition"][col_name], int):
 					sql += "{{}} = {{}}".format(col_name, list["condition"][col_name])
 			sql = re.sub(" and $", "", sql)
 			return sql
+
+	def create_order(self, list):
+		r = re.compile("^\s*(\S+)\s+(asc|desc)\s*$", re.IGNORECASE)
+		if not isinstance(list, type(dict())):
+			_app.error_log("condition is not dict")
+		elif not "order" in list:
+			_app.error_log("condition does not have `order`")
+		elif r.findall(list["order"]) == []:
+			_app.error_log("wrong format for order condition\\n{{\\"order\\": \\"field_name [asc|desc]\\"}}")
+		else:
+			# param : {{`field_name`: `asc or desc`}}
+			param =  r.findall(list["order"])[0]
+			return "order by {{}} {{}}".format(param[0], param[1])
 
 class Model:
 	def __init__(self):
@@ -431,7 +441,7 @@ class {table}_query(ModelQuery):
 
 	def find(self, cond={{}}):
 		records = []
-		sql = "select * from {table} {{}}".format(self.create_where(cond))
+		sql = "select * from {table} {{}} {{}}".format(self.create_where(cond), self.create_order(cond))
 		self.c.execute(sql)
 		for record in self.c:
 			col_dict = {{}} # {{'col_name': 'col_value',...}}
