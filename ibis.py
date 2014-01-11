@@ -333,7 +333,7 @@ class ModelQuery:
 			_app.error_log("condition is not dict")
 		elif not "order" in list:
 			_app.error_log("condition does not have `order`")
-		elif r.findall(list["order"]) == []:
+		elif not isinstance(list["order"], str) or r.findall(list["order"]) == []:
 			_app.error_log("wrong format for order condition\\n{{\\"order\\": \\"field_name [asc|desc]\\"}}")
 		else:
 			# param : {{`field_name`: `asc or desc`}}
@@ -441,7 +441,11 @@ class {table}_query(ModelQuery):
 
 	def find(self, cond={{}}):
 		records = []
-		sql = "select * from {table} {{}} {{}}".format(self.create_where(cond), self.create_order(cond))
+		if "limit" in cond and isinstance(cond["limit"], int):
+			limiter = "limit {{}}".format(cond["limit"])
+		else:
+			limiter = ""
+		sql = "select * from {table} {{}} {{}} {{}}".format(self.create_where(cond), self.create_order(cond), limiter)
 		self.c.execute(sql)
 		for record in self.c:
 			col_dict = {{}} # {{'col_name': 'col_value',...}}
