@@ -169,7 +169,8 @@ DEFAULT_LAYOUT = """\
 	<meta charset="utf-8" />
 	<style>
 		body {
-			font-family: "Lucida Grande", "segoe UI", "ヒラギノ丸ゴ ProN W4", "Hiragino Maru Gothic ProN", Meiryo, Arial, sans-serif;
+			font-family: "Lucida Grande", "segoe UI", "ヒラギノ丸ゴ ProN W4",
+			"Hiragino Maru Gothic ProN", Meiryo, Arial, sans-serif;
 		}
 	</style>
 </head>
