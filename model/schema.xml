@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <database name="jjw">
 	<table name="members">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="name" type="varchar" size="16" />
 		<column name="birthday" type="date" />
 		<column name="email" type="varchar" size="128" />
@@ -21,7 +21,7 @@
 		</foreign-key>
 	</table>
 	<table name="messages">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="member_id" type="integer" />
 		<column name="part_id" type="integer" />
 		<column name="body" type="text" />
@@ -33,7 +33,7 @@
 		</foreign-key>
 	</table>
 	<table name="reminders">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="message_id" type="integer" />
 		<column name="send_time" type="datetime" />
 		<foreign-key foreignTable="messages">
@@ -41,7 +41,7 @@
 		</foreign-key>
 	</table>
 	<table name="schedules">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="status" type="tinyint" />
 		<column name="band_id" type="integer" />
 		<column name="description" type="text" />
@@ -52,7 +52,7 @@
 		</foreign-key>
 	</table>
 	<table name="reservations">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="member_id" type="integer" />
 		<column name="room_id" type="integer" />
 		<column name="start_time" type="datetime" />
@@ -69,7 +69,7 @@
 		</foreign-key>
 	</table>
 	<table name="comments">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="member_id" type="integer" />
 		<column name="body" type="text" />
 		<foreign-key foreignTable="members">
@@ -77,17 +77,17 @@
 		</foreign-key>
 	</table>
 	<table name="musics">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="title" type="varchar" size="32" />
 		<column name="url" type="text" />
 		<column name="comment" type="text" />
-		<column name="event_id" type="integer" null="true" />
+		<column name="event_id" type="integer" null="True" />
 		<foreign-key foreignTable="events">
 			<reference local="event_id" foreign="id" />
 		</foreign-key>
 	</table>
 	<table name="scores">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="title" type="varchar" size="32" />
 		<column name="url" type="text" />
 		<column name="comment" type="text" />
@@ -107,13 +107,13 @@
 		</foreign-key>
 	</table>
 	<table name="events">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="title" type="varchar" size="32" />
 		<column name="date" type="datetime" />
 		<column name="description" type="text" />
 	</table>
 	<table name="bands">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="name" type="varchar" size="32" />
 		<column name="description" type="text" />
 	</table>
@@ -128,15 +128,15 @@
 		</foreign-key>
 	</table>
 	<table name="parts">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="name" type="varchar" size="32" />
 	</table>
 	<table name="rooms">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="name" type="varchar" size="32" />
 	</table>
 	<table name="jobs">
-		<column name="id" type="integer" primaryKey="true" autoIncrement="true" />
+		<column name="id" type="integer" primaryKey="True" autoIncrement="True" />
 		<column name="name" type="varchar" size="32" />
 	</table>
 </database>
