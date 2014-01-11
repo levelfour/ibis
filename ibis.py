@@ -384,9 +384,7 @@ class {table}_query(ModelQuery):
 	def __init__(self):
 		ModelQuery.__init__(self)
 		# col_info: (id,name,type,notnull,dflt_value,pk)
-		col_info = self.conn.cursor().execute("pragma table_info({table})").fetchall()
-		for col in col_info:
-			self.field += [col[1]]
+		self.column = self.conn.cursor().execute("pragma table_info({table})").fetchall()
 
 	def insert(self, {arglist}):
 		self.c.execute('{insert_sql}', ({columnlist}))
@@ -409,7 +407,7 @@ class {table}_query(ModelQuery):
 			ibis.ibis.error_log("no update value set")	
 		sql = "update {table} set "
 		where = self.create_where(cond)
-		for col in self.field:
+		for col in self.column[{NAME}]:
 			if col in value:
 				sql += "{{}} = '{{}}', ".format(col, value[col])
 		sql = re.sub(", $", " "+where , sql)
@@ -427,8 +425,8 @@ class {table}_query(ModelQuery):
 		self.c.execute(sql)
 		for record in self.c:
 			col_dict = {{}} # {{'col_name': 'col_value',...}}
-			for col in range(len(self.field)):
-				col_name = self.field[col]
+			for col in range(len(self.column)):
+				col_name = self.column[{NAME}][col]
 				col_dict[col_name] = record[col]
 			records += [{table}(col_dict)]
 		return records 
