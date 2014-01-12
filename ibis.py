@@ -292,22 +292,25 @@ class ibis():
 	def error_log(self, msg=""):
 		self.logger.error(msg)
 		info = sys.exc_info()
-		tb_info = traceback.extract_tb(info[2])[0]
-		# push stack info
-		for st_info in traceback.extract_stack():
-			self.push('__ERROR_FILE__', str(st_info[0]))
-			self.push('__ERROR_LINE__', str(st_info[1]))
-			self.push('__ERROR_FUNC__', str(st_info[2]))
-			self.push('__ERROR_TEXT__', str(st_info[3]))
-		# push current stack info
-		self.set('__EXCEPTION_FILE__', str(tb_info[0]))
-		self.set('__EXCEPTION_LINE__', str(tb_info[1]))
-		self.set('__EXCEPTION_FUNC__', str(tb_info[2]))
-		self.set('__EXCEPTION_TEXT__', str(tb_info[3]))
-		self.set('__ERROR_MESSAGE__', str(msg))
-		self.set("__CONTENT__", ERROR_CONTENT)
-		self.__layout = self.__expand(self.__layout)
-		print self.__layout
+		if info[2] != None:
+			tb_info = traceback.extract_tb(info[2])[0]
+			# push stack info
+			for st_info in traceback.extract_stack():
+				self.push('__ERROR_FILE__', str(st_info[0]))
+				self.push('__ERROR_LINE__', str(st_info[1]))
+				self.push('__ERROR_FUNC__', str(st_info[2]))
+				self.push('__ERROR_TEXT__', str(st_info[3]))
+			# push current stack info
+			self.set('__EXCEPTION_FILE__', str(tb_info[0]))
+			self.set('__EXCEPTION_LINE__', str(tb_info[1]))
+			self.set('__EXCEPTION_FUNC__', str(tb_info[2]))
+			self.set('__EXCEPTION_TEXT__', str(tb_info[3]))
+			self.set('__ERROR_MESSAGE__', str(msg))
+			self.set("__CONTENT__", ERROR_CONTENT)
+			self.__layout = self.__expand(self.__layout)
+			print self.__layout
+		else:
+			print msg
 		quit()
 
 #********************************************************************
@@ -383,7 +386,7 @@ class ModelQuery:
 		if not isinstance(list, type(dict())):
 			_app.error_log("condition is not dict")
 		elif not "order" in list:
-			_app.error_log("condition does not have `order`")
+			return ""
 		elif not isinstance(list["order"], str) or r.findall(list["order"]) == []:
 			_app.error_log("wrong format for order condition\\n{{\\"order\\": \\"field_name [asc|desc]\\"}}")
 		else:
