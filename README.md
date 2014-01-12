@@ -22,9 +22,18 @@ Therefore, I decided first to develop original web framework wrapping CGI.
 
 By the way, the original mean of word "ibis" is Japanese famous, but almost extinct bird like cranes, which called "toki" in Japanese.
 
+## Feature
+Ibis has below features.
+* running on CGI and SQLite3
+* consists of only 1 file (at least at present)
+* easy replacement of variable in view
+* automatically create model files from XML schema (like [Propel](http://propelorm.org))
+
 ## Usage
 ### import module
 When you use Ibis web framework (after now I simply call this "Ibis"), all you have to do is import ibis module (given as ibis.py).
+In fact, ibis.py has 2 modes such as module mode and script mode.
+Script mode is described later.
 ```python
 import ibis
 ```
