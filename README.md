@@ -41,7 +41,6 @@ Then, ibis module is available.
 Look at index.cgi.
 
 ####index.cgi
-====
 ```python
 #!/usr/bin/env python
 # coding: utf-8
@@ -65,6 +64,7 @@ Line 1 is shebang. (I recommend using `#!/usr/bin/env python` instead `#!/usr/bi
 Line 2 is the config of character code.
 At line 3, this script import ibis module.
 
+### render view
 ```python
         app = ibis.ibis()
         app.layout('view/layout.html')
@@ -72,6 +72,59 @@ At line 3, this script import ibis module.
 ```
 In this part, this CGI script rendering view.
 `ibis.ibis` is the root class of ibis module.
-This class includes view rendering engine, logger, HTTP requests data and so on.
+This class has following functions:
+* rendering view
+* retain HTTP request data
+* logger
+
+Now, I describe first function.
+View consists of two parts. "Layout" and "Element".
+In general, header and footer are shared in one site, so it is absurd to write these section in all HTML files.
+To avoid this, we need a templete file. This is layout.
+Element is the rest parts.
+
+All you have to do is **first set layout** then **render elements**.
+The former responds to `app.layout` and the latter to `app.render`.
+
+Let's look at layout.html.
+
+####layout.html
+```html
+<html lang="ja">
+<head>
+        <title>PythonでCGI framework</title>
+        <meta charset="utf-8" />
+        <script src="/view/jquery.js"></script>
+        <style>
+                body {
+                        font-family: "Lucida Grande", "segoe UI", "ヒラギノ丸ゴ ProN W4", "Hiragino Maru Gothic ProN", Meiryo, Arial, sans-serif;
+                }
+        </style>
+</head>
+<body>
+        $$__CONTENT__$$
+</body>
+</html>
+```
+
+In this file, jQuery is imported, and font and character code is set.
+Using this layout, you need not write these code in each HTML file.
+
+You may notice there is `$$__CONTENT__$$`.
+The token such as `$$/.*/$$` will replace by ibis rendering engine.
+You can add replacement variable as you wish, and you have to set variable in controller.
+To set variable, you can call this method in Python script.
+```python
+app.set(REPLACEMENT_VARIABLE_NAME, VALUE)
+```
+For example, if you call `app.set("VALUE1", "hello, world!")`,
+`$$VALUE1$$` in view will be replaced with "hello, world!".
+
+`$$__CONTENT__$$` is a special replacement variable.
+This will be replaced with the content of file which given as `app.render` argument.
+So, layout must have one `$$_CONTENT__$$`.
+(if layout does not have `$$__CONTENT__$$`, there is no error, but there is also no change after `app.render`.)
+
+## access to request data
 
 (Now writing...)
