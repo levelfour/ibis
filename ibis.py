@@ -127,45 +127,6 @@ class Request:
 			return False
 
 ######################################################################
-# + class: ibis
-# + desc: root object in Ibis library
-######################################################################
-class ibis:
-	logger = logging.getLogger("ibis")
-	log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
-	request = Request()
-
-	def __init__(self):
-		self.__open_log_file()
-
-	def __del__(self):
-		self.log_file.close()
-		del self
-
-	def __open_log_file(self):
-		try:
-			if os.path.exists(LOG_FILE_PATH):
-				self.log_file = open(LOG_FILE_PATH, "a")
-			else:
-				self.log_file = open(LOG_FILE_PATH, "w")
-				os.chmod(LOG_FILE_PATH, 0666)
-			logging.basicConfig(filename=LOG_FILE_PATH,
-					            level=logging.DEBUG,
-								format=ibis.log_format,
-								datefmt=DATE_FORMAT,)
-		except Exception, (msg):
-			print msg
-			quit()
-
-	@classmethod
-	def log(cls, msg=""):
-		cls.logger.debug(msg)
-
-	@classmethod
-	def error_log(cls, msg=""):
-		cls.logger.error(msg)
-
-######################################################################
 # constants for view
 ######################################################################
 DEFAULT_LAYOUT = """\
@@ -224,15 +185,38 @@ ERROR_CONTENT = """\
 </table>"""
 
 ######################################################################
-# + class: View
-# + desc: render HTML
+# + class: ibis
+# + desc: render View, log, get HTTP request
 ######################################################################
-class View(ibis):
+class ibis():
+	logger = logging.getLogger("ibis")
+	log_format = '%(asctime)s - %(levelname)s(%(name)s) # %(message)s'
+	request = Request()
+
 	def __init__(self):
-		ibis.__init__(self)
+		self.__open_log_file()
 		self.__set_var = {}
 		self.__set_arr = {}
 		self.__layout = DEFAULT_LAYOUT
+
+	def __del__(self):
+		self.log_file.close()
+		del self
+
+	def __open_log_file(self):
+		try:
+			if os.path.exists(LOG_FILE_PATH):
+				self.log_file = open(LOG_FILE_PATH, "a")
+			else:
+				self.log_file = open(LOG_FILE_PATH, "w")
+				os.chmod(LOG_FILE_PATH, 0666)
+			logging.basicConfig(filename=LOG_FILE_PATH,
+					            level=logging.DEBUG,
+								format=ibis.log_format,
+								datefmt=DATE_FORMAT,)
+		except Exception, (msg):
+			print msg
+			quit()
 
 	def layout(self, filename):
 		try:
