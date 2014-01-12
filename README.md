@@ -49,9 +49,8 @@ import ibis
 
 if __name__ == "__main__":
         app = ibis.ibis()
-        v = ibis.View()
-        v.layout('view/layout.html')
-        v.render('view/content.html')
+        app.layout('view/layout.html')
+        app.render('view/content.html')
 
         for v in app.request.post:
                 print "post[{}] = {}<br />".format(v, app.request.post[v])
@@ -68,12 +67,11 @@ At line 3, this script import ibis module.
 
 ```python
         app = ibis.ibis()
-        v = ibis.View()
-        v.layout('view/layout.html')
-        v.render('view/content.html')
+        app.layout('view/layout.html')
+        app.render('view/content.html')
 ```
 In this part, this CGI script rendering view.
 `ibis.ibis` is the root class of ibis module.
-This class includes logger, HTTP requests and so on.
+This class includes view rendering engine, logger, HTTP requests data and so on.
 
 (Now writing...)
